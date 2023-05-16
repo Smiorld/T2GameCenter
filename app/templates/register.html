@@ -1,0 +1,18 @@
+{% extends "layout.html" %}
+{% block content %}
+<div class="form-container">
+    <h1>注册</h1>
+    <form method="POST" action="">
+        {{ form.csrf_token }}
+        <p class="user_input">{{ form.username(class="input")}}</p>
+        <p class="user_input">{{ form.password(class="input")}}</p>
+        <p class="user_input">{{ form.password2(class="input")}}</p>
+        <input type="submit" value="Register">
+    </form>
+    {% for errors in [form.username.errors, form.password.errors, form.password2.errors] %}
+        {% for error in errors %}
+        <span class="center error">{{ error }}</span>
+        {% endfor %}
+    {% endfor %}
+</div>
+{% endblock %}

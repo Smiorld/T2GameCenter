@@ -29,6 +29,7 @@ def create_app(make_db=False,debug=False) -> Flask:
     # 注册蓝图
     # 加载大厅
     from .lobby import lobby as lobby_blueprint
+    app.register_blueprint(lobby_blueprint)
     # 五子棋加载
     # from .gomoku import gomoku as gomoku_blueprint
     # app.register_blueprint(gomoku_blueprint)

@@ -8,29 +8,51 @@ from flask import (
     jsonify,
     make_response,
 )
-from . import gomoku
-from .text import text
+from . import lobby
 from .. import db
-from ..models import User, Room
+from ..models import User
+from flask_login import login_user, logout_user, current_user, login_required
+from app.forms import LoginForm, RegistrationForm
 
-language='chinese' # default language is chinese for now 
-# TODO: add language selection
+@lobby.route("/", methods=["GET", "POST"])
+@lobby.route("/index", methods=["GET", "POST"])
+@lobby.route("/home", methods=["GET", "POST"])
+def home():
+    return render_template("home.html" )
 
-@gomoku.route("/room/<int:room_id>", methods=["GET", "POST"])
-def room(room_id):
-    if isinstance(room_id,int) and room_id<100 and room_id>0:
-        room = Room.query.filter_by(id=room_id).first()
-        if room is None:
-            #TODO: config the room using the configs stored in the User database.
-            return render_template("board.html", board_size=15, room_id=room_id, text=text[language])
-        else:
-            return render_template("board.html", board_size=room.board_size, room_id=room_id, text=text[language])
+@lobby.route("/logout", methods=["GET", "POST"])
+@login_required
+def logout():
+    logout_user()
+    return redirect(url_for("lobby.home"))
+
+@lobby.route("/login", methods=["GET", "POST"])  
+def login():
+    form = LoginForm()
+    if request.method== "POST" and form.validate_on_submit():
+        user = User.query.filter_by(username=form.username.data).first()
+        if user is None or not user.verify_password(form.password.data):
+            flash("不存在该账号或密码错误", "warning")
+            return render_template("login.html", form=form)
+        login_user(user)
+        flash("登录成功，"+user.username+"，欢迎回来！")
+        return redirect(url_for("lobby.home"))
     else:
-        return text[language]['invalid_room_id']
-        # TODO: better error page with redirect to the home page
-    
+        return render_template("login.html", form=form)
 
-@gomoku.route("/drop_a_piece/<int:room_number>/<int:player_number>/<int:row>/<int:column>", methods=["POST"])
-def drop_a_piece(room_number, player_number, row, column):
+@lobby.route("/register", methods=["GET", "POST"])
+def register():
+    form = RegistrationForm()
+    if request.method== "POST":
+        if  form.validate_on_submit():
+            user = User(username=form.username.data, password=form.password.data) # type: ignore
+            db.session.add(user)
+            db.session.commit()
+            flash("注册成功，欢迎您，"+form.username.data+"！")
+            new_user = User.query.filter_by(
+                    username=form.username.data
+                ).first()
+            login_user(new_user)
+            return redirect(url_for("lobby.home"))
+    return render_template("register.html", form=form)
 
-    return render_template("board.html", board_size=13, room_number=room_number, player_number=player_number)

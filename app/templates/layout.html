@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="x-ua-compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width,initial-scale=1,shrink-to-fit=no">
+    <link href='http://fonts.googleapis.com/css?family=Roboto' rel='stylesheet' type='text/css'>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    <link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    {#
+    <link rel=stylesheet type=text/css href="{{ url_for('static', filename='style.css') }}"> #}
+    <title>T2GameCenter</title>
+    <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@600&display=swap" rel="stylesheet">
+    <!-- for socket to work at client -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    {% block head %}
+    {% endblock %}
+    <div id="nevigation" class="w3-bar w3-black">
+        <a href="{{url_for('lobby.home')}}" class="w3-bar-item w3-button">所有大厅</a>
+        <a href="#" class="w3-bar-item w3-button">五子棋大厅</a>
+        <a href="#" class="w3-bar-item w3-button">四国军棋大厅</a>
+        {% if current_user.is_authenticated%}
+        <div class="w3-dropdown-hover">
+            <button class="w3-bar-item w3-button">欢迎，{{current_user.username}}</button>
+            <div class="w3-dropdown-content w3-bar-block w3-card-4">
+                {# <a id="profile" href="{{ url_for('profile') }}" class="w3-bar-item w3-button">个人信息</a> #}
+                <a id="logout" href="{{ url_for('lobby.logout') }}" class="w3-bar-item w3-button">登出</a>
+            </div>
+        </div>
+        {% else %}
+        <a href="{{ url_for('lobby.login') }}" class="w3-bar-item w3-blue w3-button">登录</a>
+        <a href="{{ url_for('lobby.register') }}" class="w3-bar-item w3-blue w3-button">注册</a>
+        {% endif %}
+
+    </div>
+</head>
+<div class="w3-container">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+    <ul class=flashes>
+        {% for category,message in messages %}
+        {% if category=="message" %}
+        <div class="w3-panel w3-green w3-display-container">
+            <span onclick="this.parentElement.style.display='none'"
+                class="w3-button w3-green w3-large w3-display-topright">&times;</span>
+            <h3>Success!</h3>
+            <p>{{message}}</p>
+        </div>
+        {% endif %}
+        {% endfor %}
+    </ul>
+    {% endif %}
+    {% endwith %}
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+    <ul class=flashes>
+        {% for category,message in messages %}
+        {% if category=="warning" %}
+        <div class="w3-panel w3-yellow w3-display-container">
+            <span onclick="this.parentElement.style.display='none'"
+                class="w3-button w3-yellow w3-large w3-display-topright">&times;</span>
+            <h3>Warning!</h3>
+            <p>{{message}}</p>
+        </div>
+        {% endif %}
+        {% endfor %}
+    </ul>
+    {% endif %}
+    {% endwith %}
+    {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+    <ul class=flashes>
+        {% for category,message in messages %}
+        {% if category=="error" %}
+        <div class="w3-panel w3-red w3-display-container">
+            <span onclick="this.parentElement.style.display='none'"
+                class="w3-button w3-red w3-large w3-display-topright">&times;</span>
+            <h3>Error!</h3>
+            <p>{{message}}</p>
+        </div>
+        {% endif %}
+        {% endfor %}
+    </ul>
+    {% endif %}
+    {% endwith %}
+    <!-- {% for message in get_flashed_messages() %}
+            <div id="alert" class="center alert" onclick="fadeOutEffect()">
+                <p class="tertiary">{{ message }}</p>
+            </div>
+            {% endfor %} -->
+</div>
+
+<body>
+
+    {% block content %}
+    {% endblock %}
+
+</body>
+
+</html>
