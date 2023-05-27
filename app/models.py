@@ -36,7 +36,7 @@ class FourNationChessLobby(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     lobby_name = db.Column(db.String(20), nullable=False)
     is_private = db.Column(db.Boolean, nullable=False, default=False)
-    password = db.Column(db.Integer(20), nullable=True)
+    password = db.Column(db.Integer, nullable=True)
     player1_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)
     player2_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)
     player3_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)
