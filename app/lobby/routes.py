@@ -48,7 +48,7 @@ def register():
             user = User(username=form.username.data, password=form.password.data) # type: ignore
             db.session.add(user)
             db.session.commit()
-            flash("注册成功，欢迎您，"+form.username.data+"！")
+            flash("注册成功，欢迎您，"+form.username.data+"！","success")
             new_user = User.query.filter_by(
                     username=form.username.data
                 ).first()
