@@ -61,13 +61,14 @@ def register():
 
 @lobby.route("/4ncLobby", methods=["GET", "POST"])
 def FourNationChessLobby():
+    form = FourNationChessForm()
     rooms = cache.get("4nc_rooms")
     if rooms is None:
         rooms = FourNationChessRoom.query.all()
         cache.set("4nc_rooms", rooms)
     rooms=[{'player1_id':1,'player3_id':3,'player2_id':3,'player4_id':3},2,3,4,5]
 
-    return render_template("FourNationChessLobby.html", rooms=rooms)
+    return render_template("FourNationChessLobby.html", rooms=rooms,form=form)
 
 @lobby.route("/4ncCreateRoom", methods=["GET", "POST"])
 @login_required

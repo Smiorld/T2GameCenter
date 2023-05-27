@@ -36,10 +36,48 @@
     <button type="button" class="btn-close text-reset" data-bs-dismiss="offcanvas" aria-label="Close"></button>
   </div>
   <div class="offcanvas-body">
-    <div>
-      测试阶段捏，只有下面这个创建按钮捏，以后会有表格可以填的捏
+    <div class="container m-1">
+        <form method="POST" action="{{url_for(lobby.FourNationChessCreateRoom)}}">
+            <div class="card" data-bs-theme="dark">
+                <h5 class="card-title text-center m-1">创建房间</h1>
+                <div class="card-body">
+                    {{ form.csrf_token }}
+                    <div class="row mb-3">
+                        <label class="col-sm-2 col-form-label">私人房间</label>
+                        <div class="col-sm-10">
+                            {{ form.username(class="form-check-input form-control"), type="checkbox" }}
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <label class="col-sm-2 col-form-label">密码</label>
+                        <div class="col-sm-10">
+                            {{ form.password(class="form-control") }}
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <label class="col-sm-2 col-form-label">观众上帝视角</label>
+                        <div class="col-sm-10">
+                            {{ form.god_perspective(class="form-check-input form-control"), type="checkbox" }}
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <label class="col-sm-2 col-form-label">每回合倒计时(秒)</label>
+                        <div class="col-sm-10">
+                            {{ form.turn_time_limit(class="form-control") }}
+                        </div>
+                    </div>
+                    <div class="row justify-content-sm-center mb-3">
+                        {{form.submit(class="btn btn-primary col-sm-3")}}
+                    </div>
+                </div>
+            </div>
+        </form>
+        {% for errors in [form.is_private.errors, form.password.errors, form.god_perspective.errors, form.turn_time_limit.errors] %}
+            {% for error in errors %}
+                <div class="alert alert-danger show m-1">{{ error }}</div>
+            {% endfor %}
+        {% endfor %}  
     </div>
-    <a class="btn btn-primary" href="#">创建新房间</a>
   </div>
 </div>
 
