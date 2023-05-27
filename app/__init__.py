@@ -7,8 +7,11 @@ from flask_socketio import SocketIO
 from flask_caching import Cache
 socketio = SocketIO(async_mode='eventlet')
 db= SQLAlchemy()
-cache = Cache()
 login_manager = LoginManager()
+cache = Cache(config={
+        "CACHE_TYPE": "SimpleCache",
+        "CACHE_DEFAULT_TIMEOUT": 300
+    })
 app=Flask(__name__)
 def create_app(make_db=False,debug=False) -> Flask:
 
@@ -26,14 +29,6 @@ def create_app(make_db=False,debug=False) -> Flask:
     basedir = os.path.abspath(os.path.dirname(__file__))
     app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///" + os.path.join(basedir, "data.db")
 
-    # 加载缓存
-    cache_config = {
-        "DEBUG": debug,
-        "CACHE_TYPE": "simple",
-        "CACHE_DEFAULT_TIMEOUT": 300
-    }
-    app.config.from_mapping(cache_config)
-    cache = Cache(app)
 
     # 注册蓝图
     # 加载大厅
@@ -56,6 +51,7 @@ def create_app(make_db=False,debug=False) -> Flask:
 
     socketio.init_app(app)
     login_manager.init_app(app)
+    cache.init_app(app)
     return app
 
 from . import models

@@ -1,14 +1,46 @@
 {% extends "layout.html" %}
 {% block content %}
-<div class="container" data-bs-theme="dark">
-    {% for i in range(rows) %}
-    <div class="row" id="row-{{i}}">
-        {% for j in range(cols) %}
-        <div class="col" id="col-{{j}}">
-            <div class="cell" id="cell-{{i}}-{{j}}">test<a class="btn">进入</a></div>
+<div class="container m-1" data-bs-theme="dark">
+    {% for row in rooms|batch(3) %}
+    <div class="row row-cols-3">
+        {% for room in row if room %}
+        <div class="col" >
+            <div class="card mb-1" >
+                <div class="card-body">
+                    <p class="card-text">{% if room.is_private %}🔒{% endif %}房间{{room.id}}.{% if room.player1_id %}🙎‍♂️{%else%}👤{%endif%}{% if room.player2_id %}🧝{%else%}👤{%endif%}{% if room.player3_id %}🙎‍♂️{%else%}👤{%endif%}{% if room.player4_id %}🧝{%else%}👤{%endif%} <a href="#" class="btn btn-primary">进入</a></p>
+                </div>
+            </div>
         </div>
         {% endfor %}
     </div>
     {% endfor %}
 </div>
+<div class="dropup position-absolute bottom-0 end-0 rounded-circle m-5" data-bs-theme="dark">
+  <button type="button" class="btn btn-success btn-lg dropdown-toggle hide-toggle" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">
+    <i class="fa-solid fa-plus">选项</i>
+  </button>
+  <ul class="dropdown-menu">
+    <li>
+      <a class="dropdown-item" data-bs-toggle="offcanvas" href="#createRoom">创建房间</a>
+    </li>
+    <li>
+      <a class="dropdown-item" href="#">检索房间（TODO）</a>
+    </li>
+  </ul>
+</div>
+
+<div class="offcanvas offcanvas-start" tabindex="-1" id="createRoom" data-bs-theme="dark" aria-labelledby="offcanvasExampleLabel">
+  <div class="offcanvas-header">
+    <h5 class="offcanvas-title" id="offcanvasExampleLabel">创建房间</h5>
+    <button type="button" class="btn-close text-reset" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+  </div>
+  <div class="offcanvas-body">
+    <div>
+      测试阶段捏，只有下面这个创建按钮捏，以后会有表格可以填的捏
+    </div>
+    <a class="btn btn-primary" href="{{url_for('lobby.create_4nc_room')}}">创建新房间</a>
+  </div>
+</div>
+
+
 {% endblock %}

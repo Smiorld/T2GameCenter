@@ -9,7 +9,7 @@ from flask import (
     make_response,
 )
 from . import lobby
-from .. import db, cache
+from .. import db, cache, app
 from ..models import User, FourNationChessRoom
 from flask_login import login_user, logout_user, current_user, login_required
 from app.forms import LoginForm, RegistrationForm
@@ -65,5 +65,6 @@ def FourNationChessLobby():
     if rooms is None:
         rooms = FourNationChessRoom.query.all()
         cache.set("4nc_rooms", rooms)
-    rows = len(rooms)/3 if len(rooms)%3==0 else len(rooms)/3+1
-    return render_template("FourNationChessLobby.html", rooms=rooms, rows=rows, cols=3)
+    rooms=[{'player1_id':1,'player3_id':3,'player2_id':3,'player4_id':3},2,3,4,5]
+
+    return render_template("FourNationChessLobby.html", rooms=rooms)
