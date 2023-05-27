@@ -96,7 +96,7 @@ def FourNationChessCreateRoom():
             return render_template("4ncCreateRoom.html", form=form)
         
 @lobby.route("/4ncRoom/<int:room_id>", methods=["GET", "POST"])
-def FourNationChessRoom(room_id):
+def FourNationChessGameRoom(room_id):
     room = FourNationChessRoom.query.filter_by(id=room_id).first()
     if room is None:
         flash("房间不存在，请从大厅选择存在的房间进入。", "warning")
