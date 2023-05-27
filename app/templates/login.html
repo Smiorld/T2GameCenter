@@ -24,5 +24,10 @@
             </div>
         </div>
     </form>
+    {% for errors in [form.username.errors, form.password.errors] %}
+        {% for error in errors %}
+            <div class="alert alert-danger show m-1">{{ error }}</div>
+        {% endfor %}
+    {% endfor %}  
 </div>
 {% endblock %}
