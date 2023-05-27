@@ -28,13 +28,13 @@ class User(UserMixin, db.Model):
     def verify_password(self, password):
         return check_password_hash(self.hashed_password, password)
 
-# 四国军棋 lobby table
-class FourNationChessLobby(db.Model):
+# 四国军棋 room table
+class FourNationChessRoom(db.Model):
 
-    __tablename__ = "four_nation_chess_lobby"
+    __tablename__ = "four_nation_chess_room"
 
     id = db.Column(db.Integer, primary_key=True)
-    lobby_name = db.Column(db.String(20), nullable=False)
+    room_name = db.Column(db.String(20), nullable=False)
     is_private = db.Column(db.Boolean, nullable=False, default=False)
     password = db.Column(db.Integer, nullable=True)
     player1_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)

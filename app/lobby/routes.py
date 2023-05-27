@@ -24,6 +24,7 @@ def home():
 @login_required
 def logout():
     logout_user()
+    flash("您已成功登出", "success")
     return redirect(url_for("lobby.home"))
 
 @lobby.route("/login", methods=["GET", "POST"])  
@@ -56,3 +57,7 @@ def register():
             return redirect(url_for("lobby.home"))
     return render_template("register.html", form=form)
 
+
+@lobby.route("/FourNationChessLobby", methods=["GET", "POST"])
+def FourNationChess():
+    return render_template("FourNationChessLobby.html")
