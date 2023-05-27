@@ -66,7 +66,6 @@ def FourNationChessLobby():
     if rooms is None:
         rooms = FourNationChessRoom.query.all()
         cache.set("4nc_rooms", rooms)
-    rooms=[{'player1_id':1,'player3_id':3,'player2_id':3,'player4_id':3},2,3,4,5]
 
     return render_template("FourNationChessLobby.html", rooms=rooms,form=form)
 
