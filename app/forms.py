@@ -41,3 +41,24 @@ class RegistrationForm(FlaskForm):
         user = User.query.filter_by(username=username.data).first()
         if user is not None:
             raise ValidationError("用户名已存在")
+        
+class FourNationChessForm(FlaskForm):
+    is_private = BooleanField(
+        "Private Room", render_kw={"placeholder": "私密房间 Private Room"}, default=False
+    )
+    password = PasswordField(
+        "Password", render_kw={"placeholder": "密码 Password"}
+    )
+    god_perspective = BooleanField(
+        "God Perspective", render_kw={"placeholder": "上帝视角 God Perspective"}, default=False
+    )
+    turn_time_limit = IntegerField(
+        "Turn Time Limit", render_kw={"placeholder": "回合时间限制 Turn Time Limit"}, default=60
+    )
+    submit = SubmitField("创建")
+
+    def validatge_password(self, password):
+        if self.is_private.data and password.data == "":
+            raise ValidationError("私密房间必须设置密码")
+        elif not self.is_private.data and password.data != "":
+            raise ValidationError("公开房间不能设置密码")

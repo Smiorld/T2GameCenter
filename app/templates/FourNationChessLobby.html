@@ -1,9 +1,8 @@
 {% extends "layout.html" %}
 {% block content %}
 <div class="container m-1" data-bs-theme="dark">
-    {% for row in rooms|batch(3) %}
-    <div class="row row-cols-3">
-        {% for room in row if room %}
+    <div class="row row-cols-auto">
+        {% for room in rooms if room %}
         <div class="col" >
             <div class="card mb-1" >
                 <div class="card-body">
@@ -13,7 +12,6 @@
         </div>
         {% endfor %}
     </div>
-    {% endfor %}
 </div>
 <div class="dropup position-absolute bottom-0 end-0 rounded-circle m-5" data-bs-theme="dark">
   <button type="button" class="btn btn-success btn-lg dropdown-toggle hide-toggle" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">
@@ -24,7 +22,10 @@
       <a class="dropdown-item" data-bs-toggle="offcanvas" href="#createRoom">创建房间</a>
     </li>
     <li>
-      <a class="dropdown-item" href="#">检索房间（TODO）</a>
+      <a class="dropdown-item" href="#">检索房间(TODO)</a>
+    </li>
+    <li>
+      <a class="dropdown-item" href="#">↻刷新(TODO)</a>
     </li>
   </ul>
 </div>
@@ -38,7 +39,7 @@
     <div>
       测试阶段捏，只有下面这个创建按钮捏，以后会有表格可以填的捏
     </div>
-    <a class="btn btn-primary" href="{{url_for('lobby.create_4nc_room')}}">创建新房间</a>
+    <a class="btn btn-primary" href="#">创建新房间</a>
   </div>
 </div>
 

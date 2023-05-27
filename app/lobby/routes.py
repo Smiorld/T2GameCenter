@@ -9,10 +9,10 @@ from flask import (
     make_response,
 )
 from . import lobby
-from .. import db, cache, app
+from .. import db, cache, login_manager
 from ..models import User, FourNationChessRoom
 from flask_login import login_user, logout_user, current_user, login_required
-from app.forms import LoginForm, RegistrationForm
+from app.forms import LoginForm, RegistrationForm, FourNationChessForm
 
 
 @lobby.route("/", methods=["GET", "POST"])
@@ -59,7 +59,7 @@ def register():
     return render_template("register.html", form=form)
 
 
-@lobby.route("/FourNationChessLobby", methods=["GET", "POST"])
+@lobby.route("/4ncLobby", methods=["GET", "POST"])
 def FourNationChessLobby():
     rooms = cache.get("4nc_rooms")
     if rooms is None:
@@ -68,3 +68,46 @@ def FourNationChessLobby():
     rooms=[{'player1_id':1,'player3_id':3,'player2_id':3,'player4_id':3},2,3,4,5]
 
     return render_template("FourNationChessLobby.html", rooms=rooms)
+
+@lobby.route("/4ncCreateRoom", methods=["GET", "POST"])
+@login_required
+def FourNationChessCreateRoom():
+    form = FourNationChessForm()
+    if request.method== "GET":
+        # 返回创建房间页面
+        return render_template("4ncCreateRoom.html", form=form)
+    else:
+        # post method, 直接返回创建后的房间，或者返回错误信息
+        if form.validate_on_submit():
+            try:
+                room = FourNationChessRoom(is_private=form.is_private.data, god_perspective=form.god_perspective.data, password=form.password.data) # type: ignore
+                if room.is_private:
+                    room.password = form.password.data
+                db.session.add(room)
+                db.session.commit()
+                flash("创建成功！您已进入创建好的房间。","success")
+                return redirect(url_for("lobby.FourNationChessRoom", room_id=room.id))
+            except Exception as e:
+                db.session.rollback()
+                flash("创建失败，请重试。", "warning")
+                return render_template("4ncCreateRoom.html", form=form)
+        else:
+            flash("创建失败，请重试。", "warning")
+            return render_template("4ncCreateRoom.html", form=form)
+        
+@lobby.route("/4ncRoom/<int:room_id>", methods=["GET", "POST"])
+def FourNationChessRoom(room_id):
+    room = FourNationChessRoom.query.filter_by(id=room_id).first()
+    if room is None:
+        flash("房间不存在，请从大厅选择存在的房间进入。", "warning")
+        return redirect(url_for("lobby.FourNationChessLobby"))
+    return render_template("4ncRoom.html", room=room)
+
+
+
+
+
+@login_manager.unauthorized_handler
+def unauthorized():
+    flash("您所请求的页面或操作需要您先登录，请登陆后重试。", "warning")
+    return redirect(url_for("lobby.login"))
