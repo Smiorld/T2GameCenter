@@ -28,7 +28,34 @@ class User(UserMixin, db.Model):
     def verify_password(self, password):
         return check_password_hash(self.hashed_password, password)
 
+# 四国军棋 lobby table
+class FourNationChessLobby(db.Model):
 
+    __tablename__ = "four_nation_chess_lobby"
+
+    id = db.Column(db.Integer, primary_key=True)
+    lobby_name = db.Column(db.String(20), nullable=False)
+    is_private = db.Column(db.Boolean, nullable=False, default=False)
+    password = db.Column(db.Integer(20), nullable=True)
+    player1_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)
+    player2_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)
+    player3_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)
+    player4_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)
+    is_game_started = db.Column(db.Boolean, nullable=False, default=False)
+
+class FourNationChessHistory(db.Model):
+
+    __tablename__ = "four_nation_chess_history"
+
+    id = db.Column(db.Integer, primary_key=True)
+    timestamp = db.Column(db.DateTime, nullable=False)
+    lobby_id = db.Column(db.Integer, nullable=False)
+    player1_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    player2_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    player3_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    player4_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    winner_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    match_histroy = db.Column(db.String(1000), nullable=False)
 
 @login_manager.user_loader
 def load_user(user_id):
