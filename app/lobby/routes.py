@@ -87,13 +87,13 @@ def FourNationChessCreateRoom():
                 db.session.add(room)
                 db.session.commit()
                 flash("创建成功！您已进入创建好的房间。","success")
-                return redirect(url_for("lobby.FourNationChessRoom", room_id=room.id))
+                return redirect(url_for("lobby.FourNationChessGameRoom", room_id=room.id))
             except Exception as e:
                 db.session.rollback()
                 flash("创建失败，请重试。", "warning")
                 return render_template("4ncCreateRoom.html", form=form)
         else:
-            flash("创建失败，请重试。", "warning")
+            flash("验证未通过，创建失败，请重试。", "warning")
             return render_template("4ncCreateRoom.html", form=form)
         
 @lobby.route("/4ncRoom/<int:room_id>", methods=["GET", "POST"])
