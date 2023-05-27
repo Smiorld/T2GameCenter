@@ -9,10 +9,11 @@ from flask import (
     make_response,
 )
 from . import lobby
-from .. import db
-from ..models import User
+from .. import db, cache
+from ..models import User, FourNationChessRoom
 from flask_login import login_user, logout_user, current_user, login_required
 from app.forms import LoginForm, RegistrationForm
+
 
 @lobby.route("/", methods=["GET", "POST"])
 @lobby.route("/index", methods=["GET", "POST"])
@@ -59,5 +60,10 @@ def register():
 
 
 @lobby.route("/FourNationChessLobby", methods=["GET", "POST"])
-def FourNationChess():
-    return render_template("FourNationChessLobby.html")
+def FourNationChessLobby():
+    rooms = cache.get("4nc_rooms")
+    if rooms is None:
+        rooms = FourNationChessRoom.query.all()
+        cache.set("4nc_rooms", rooms)
+    rows = len(rooms)/3 if len(rooms)%3==0 else len(rooms)/3+1
+    return render_template("FourNationChessLobby.html", rooms=rooms, rows=rows, cols=3)

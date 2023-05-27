@@ -7,6 +7,7 @@ from flask_socketio import SocketIO
 from flask_caching import Cache
 socketio = SocketIO(async_mode='eventlet')
 db= SQLAlchemy()
+cache = Cache()
 login_manager = LoginManager()
 app=Flask(__name__)
 def create_app(make_db=False,debug=False) -> Flask:

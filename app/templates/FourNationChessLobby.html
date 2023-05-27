@@ -1,1 +1,14 @@
 {% extends "layout.html" %}
+{% block content %}
+<div class="container" data-bs-theme="dark">
+    {% for i in range(rows) %}
+    <div class="row" id="row-{{i}}">
+        {% for j in range(cols) %}
+        <div class="col" id="col-{{j}}">
+            <div class="cell" id="cell-{{i}}-{{j}}">test<a class="btn">进入</a></div>
+        </div>
+        {% endfor %}
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}
