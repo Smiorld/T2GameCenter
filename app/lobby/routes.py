@@ -1,5 +1,6 @@
 from flask import (
     Flask,
+    session,
     render_template,
     url_for,
     redirect,
@@ -36,7 +37,7 @@ def login():
         if user is None or not user.verify_password(form.password.data):
             flash("不存在该账号或密码错误", "warning")
             return render_template("login.html", form=form)
-        login_user(user)
+        login_user(user, remember=True) # TODO:记住用户选项实装
         flash("登录成功，"+user.username+"，欢迎回来！")
         return redirect(url_for("lobby.home"))
     else:
@@ -62,10 +63,7 @@ def register():
 @lobby.route("/4ncLobby", methods=["GET", "POST"])
 def FourNationChessLobby():
     form = FourNationChessForm()
-    rooms = cache.get("4nc_rooms")
-    if rooms is None:
-        rooms = FourNationChessRoom.query.all()
-        cache.set("4nc_rooms", rooms)
+    rooms = FourNationChessRoom.query.all()
 
     return render_template("FourNationChessLobby.html", rooms=rooms,form=form)
 
@@ -101,7 +99,7 @@ def FourNationChessGameRoom(room_id):
     if room is None:
         flash("房间不存在，请从大厅选择存在的房间进入。", "warning")
         return redirect(url_for("lobby.FourNationChessLobby"))
-    return render_template("4ncRoom.html", room=room)
+    return render_template("4ncRoom.html", room_id=room_id)
 
 
 

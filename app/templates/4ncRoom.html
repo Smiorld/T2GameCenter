@@ -3,5 +3,64 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"
     integrity="sha512-q/dWJ3kcmjBLU4Qc47E4A9kTB4m3wuTY7vkFJDTZKjTs8jhyGQnaUrxa0Ytd0ssMZhbNua9hE+E7Qv1j+DyZwA=="
     crossorigin="anonymous"></script>
+<script>
+    var socket = io('/4ncRoom');
+    var uid = {{ current_user.id }};
+    var uname = {{ current_user.username }};
+    var sid = null;
+    var timer = setInterval(function () {
+        let timer = document.getElementById('countdown_timer');
+        if (timer != null) {
+            let time_left = parseInt(timer.innerHTML);
+            if (time_left > 0) {
+                timer.innerHTML = time_left - 1;
+            }// it's a fake timer for user, the real time-out logic is on serverside
+        }
+    }, 1000);
+
+    socket.on('update room',function(data){
+        update_room(data);
+    });
+
+    socket.on('connect', function () {
+        // if successfully connect to the server, attempt to join the room
+        // account system not implemented yet, so a player is allowed to join multiple rooms for multiple times.
+        console.log('connected to the server, trying to join the room');
+        sid = socket.id;
+        socket.emit('join', { 'room_id': {{ room_id }}, 'password': null});
+        
+        {% if current_user.is_authenticated %}
+           uid = {{ current_user.id }};
+           uname = "{{ current_user.username }}";
+        {% endif %}
+    });
+
+
+
+    socket.on('room reject', function(data){
+        // if the server reject the request to join the room, redirect to the home page and flash it
+    });
+
+
+    function update_room(data){
+        // 这几乎是最重要的一个函数，用于更新房间信息。服务端接受到任何房间内的信息变动，都会触发调用本函数的event。
+        // 首先是data里面的信息，data是一个字典，包含了房间的所有信息：room实例的字典化，所有在本房间的玩家信息字典化，游戏信息字典化。
+        // data={ 'common_data': common_data}, 'specified_data':specified_data  }
+        //common_data是所有玩家都同步的公共公开的信息，specified_data是针对这个用户发送的数据，每个人都是不一样的。
+        // 本函数的作用是根据data里面的信息，更新本页面的显示、客户端的内容储存。
+    }
+
+    function send_join_player(player_position){
+        // 玩家点击入座按钮后，发送入座信息给服务器. data={"room_id":room_id, "player_position":int(1-4)}
+        socket.emit('join player', {'room_id':{{ room_id }}, 'player_position':player_position});
+
+    }
+
+
+</script>
+
+
+
 {% endblock %}
 {% block content %}
+{% endblock %}

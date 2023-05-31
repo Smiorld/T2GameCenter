@@ -11,7 +11,7 @@ db= SQLAlchemy()
 login_manager = LoginManager()
 cache = Cache(config={
         "CACHE_TYPE": "SimpleCache",
-        "CACHE_DEFAULT_TIMEOUT": 300
+        "CACHE_DEFAULT_TIMEOUT": 600
     })
 csrf= CSRFProtect()
 app=Flask(__name__)
