@@ -31,3 +31,4 @@ try contact T2 for test case.
 06/02/2023 已完成get ready, give up, game over，超时判负。下一步是完成move action，然后就可以步入测试阶段了
 
 06/03/2023 完成了move action。后端响应均已完成， 来到前端代码辣。
+经过半天的调试，基本进入了可以前后端结合debug的状态。慢慢把现在的代码debug调通。

@@ -116,14 +116,7 @@ def add_reconnect_timer(room_id, room): # 添加重连倒计时任务，主要�
 def on_join(data):
     # 用户的socket链接建立成功，默认添加用户到观众。 data={"room_id":room_id, "password":password}
     sid = request.sid # type: ignore
-    uid = current_user.id # type: ignore
-
-    # 首先确认用户是不是登录了，如果不是，进入观众
-    if not current_user.is_authenticated: # type: ignore
-        join_room(data['room_id'], sid, namespace="/4ncRoom")
-        emit_update_room(data['room_id'])
-        return
-
+    uid = current_user.id if current_user else None # type: ignore
     # 检查参数合法性
     if not isinstance(data["room_id"], int) or data["room_id"] not in range(1, 101):
         emit("room reject", {"message": "房间号字段不合法\nInvalid parameters for room_id"}, to=sid, namespace="/4ncRoom")
@@ -167,23 +160,28 @@ def on_join(data):
             emit("room reject", {"message": "您已经在其它房间\nYou are already in another room."}, to=sid, namespace="/4ncRoom")
             return
         else:
-            # 用户不在其它房间，进入房间成功, 并且将用户信息写入数据库
-            user4nc = User4NC(uid=uid, rid=data["room_id"], sid=sid)
-            db.session.add(user4nc)
-            db.session.commit()
+            # 用户不在其它房间，进入房间成功, 并且将用户信息写入数据库(看看用户是不是游客)
+            if current_user.is_authenticated: # type: ignore
+                user4nc = User4NC(uid=uid, rid=data["room_id"], sid=sid)
+                db.session.add(user4nc)
+                db.session.commit()
+                app.logger.info('用户'+str(uid)+'进入房间'+str(data['room_id']))
+            else:
+                # 游客数据不需要进数据库
+                app.logger.info('游客进入房间'+str(data['room_id']))
 
-        join_room(data['room_id'], sid, namespace="/4ncRoom")
-        emit_update_room(data['room_id'])
+            join_room(data['room_id'], sid, namespace="/4ncRoom")
+            emit_update_room(data['room_id'])
 
 @socketio.on("disconnect", namespace="/4ncRoom") # 有socket断开连接
 def on_disconnect():
-    sid = request.sid # type: ignore
-    uid = current_user.id # type: ignore
     # 看看是不是游客离开了
     if not current_user.is_authenticated: # type: ignore
         # 纯游客离开了，不需要做任何操作
+        app.logger.info('游客离开了4nc房间')
         return
-    
+    sid = request.sid # type: ignore
+    uid = current_user.id if current_user.is_authenticated else None# type: ignore
     # 需考虑断线重联。如果游戏未开始，那么直接删除该用户在本房间的信息。如果游戏已经开始 且 用户为p1-p4之一，那么需要将战局标记为断线等待，进入额外的断线重连等待时间。
     # 如果用户强行加入了其他房间 或 倒计时未重连，宣布用户离线，且将该用户判定投降。
 
@@ -225,20 +223,21 @@ def on_disconnect():
                 leave_room(str(room.id)+"_player", sid, namespace="/4ncRoom")
                 if is_room_empty(room.id):
                     # 如果房间空了，那么删除房间
-                    delete_room(room.id)
                     emit("room delete", {"room_id": room.id}, to=str(room.id), namespace="/4ncRoom")
+                    delete_room(room.id)
                     return
                 emit_update_room(room.id)
                 return
         else:
             # 否则直接将玩家移除本房间
+            app.logger.info('用户'+str(uid)+'离开房间'+str(user4nc.rid))
             db.session.delete(user4nc)
             db.session.commit()
-            leave_room(room.id, sid, namespace="/4ncRoom")
+            leave_room(room.id, sid, namespace="/4ncRoom")        
             if is_room_empty(room.id):
                 # 如果房间空了，那么删除房间
-                delete_room(room.id)
                 emit("room delete", {"room_id": room.id}, to=str(room.id), namespace="/4ncRoom")
+                delete_room(room.id)
                 return
             emit_update_room(room.id)
             return
@@ -478,11 +477,11 @@ def emit_update_room(room_id):
 
         # common data 和 specified data 组装. 其中，specified_data_1-4是给四位玩家的数据，而specified_data本体是给观战者的数据。
         common_data = {
-            "room": room,
-            "player1": player1,
-            "player2": player2,
-            "player3": player3,
-            "player4": player4,
+            "room": serialize_room(room),
+            "player1": serialize_user(player1),
+            "player2": serialize_user(player2),
+            "player3": serialize_user(player3),
+            "player4": serialize_user(player4),
             "is_lost": is_lost,
             "is_ready": is_ready,
             "current_player": current_player,
@@ -722,4 +721,45 @@ def clear_cache(room_id) -> bool:
         cache.delete("is_ready/"+str(room_id))
         cache.delete("current_player/"+str(room_id))
         return True
+#####
+
+##### models.py 所有对象的json serializable方法
+
+def serialize_user(user):
+    if user is None:
+        return None
+    else:
+        return {
+        'id': user.id,
+        'username': user.username
+        }
+
+def serialize_room(room):
+    if room is None:
+        return None
+    else:
+        return{
+            'id': room.id,
+            'is_private': room.is_private,
+            'god_perspective': room.god_perspective,
+            'password': room.password,
+            'player1_id': room.player1_id,
+            'player2_id': room.player2_id,
+            'player3_id': room.player3_id,
+            'player4_id': room.player4_id,
+            'each_turn_time': room.each_turn_time,
+            'is_game_started': room.is_game_started,
+            'pause': room.pause
+        }
+
+def serialize_user4nc(user4nc):
+    if user4nc is None:
+        return None
+    else:
+        return{
+            'uid': user4nc.uid,
+            'rid': user4nc.rid,
+            'sid': user4nc.sid
+        }
+
 #####

@@ -15,7 +15,7 @@ cache = Cache(config={
     })
 csrf= CSRFProtect()
 app=Flask(__name__)
-def create_app(make_db=False,debug=False) -> Flask:
+def create_app(make_db=False, delete_room_on_launch=True,debug=False) -> Flask:
 
 
     app.debug = debug
@@ -48,6 +48,13 @@ def create_app(make_db=False,debug=False) -> Flask:
             db.drop_all()
             db.create_all()
             db.session.commit()
+    
+    if not make_db and delete_room_on_launch:
+        with app.app_context():
+            from .models import FourNationChessRoom
+            FourNationChessRoom.query.delete()
+            db.session.commit()
+            cache.clear()
 
 
     socketio.init_app(app)

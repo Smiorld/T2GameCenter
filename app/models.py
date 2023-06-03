@@ -53,8 +53,8 @@ class FourNationChessRoom(db.Model):
 class User4NC(db.Model):
     # this table is used to store user-room relationship
     __tablename__ = "user_4nc"
-
-    uid=db.Column(db.Integer, db.ForeignKey('user.id'), primary_key=True, autoincrement=False)
+    id = db.Column(db.Integer, primary_key=True)
+    uid=db.Column(db.Integer, db.ForeignKey('user.id'), unique=True)
     rid=db.Column(db.Integer, db.ForeignKey('four_nation_chess_room.id'), nullable=False)
     sid=db.Column(db.String(128), nullable=True)
 
@@ -96,28 +96,50 @@ def load_user(user_id):
 #     # 删除缓存项
 #         cache.delete("user/"+str(target.id))
 
-@event.listens_for(db.session, "after_commit")
-def delete_cache_after_commit(session):
-    for obj in session.dirty:  # Track updated objects
-        if isinstance(obj, FourNationChessRoom):
-            cache.delete("room/" + str(obj.id))
-        if isinstance(obj, User4NC):
-            cache.delete("user4nc/" + str(obj.id))
-        if isinstance(obj, User):
-            cache.delete("user/" + str(obj.id))
+
+
+# @event.listens_for(db.session, "after_flush")
+# def delete_cache_after_commit(session):
+#     for obj in session.dirty:  # Track updated objects
+#         if isinstance(obj, FourNationChessRoom):
+#             cache.delete("room/" + str(obj.id))
+#         if isinstance(obj, User4NC):
+#             cache.delete("user4nc/" + str(obj.id))
+#         if isinstance(obj, User):
+#             cache.delete("user/" + str(obj.id))
             
-    for obj in session.deleted:  # Track deleted objects
-        if isinstance(obj, FourNationChessRoom):
-            cache.delete("room/" + str(obj.id))
-        if isinstance(obj, User4NC):
-            cache.delete("user4nc/" + str(obj.id))
-        if isinstance(obj, User):
-            cache.delete("user/" + str(obj.id))
-    for obj in session.new:  # Track newly inserted objects
-        if isinstance(obj, FourNationChessRoom):
-            cache.delete("room/" + str(obj.id))
-        if isinstance(obj, User4NC):
-            cache.delete("user4nc/" + str(obj.id))
-        if isinstance(obj, User):
-            cache.delete("user/" + str(obj.id))
+#     for obj in session.deleted:  # Track deleted objects
+#         if isinstance(obj, FourNationChessRoom):
+#             cache.delete("room/" + str(obj.id))
+#         if isinstance(obj, User4NC):
+#             cache.delete("user4nc/" + str(obj.id))
+#         if isinstance(obj, User):
+#             cache.delete("user/" + str(obj.id))
+#     for obj in session.new:  # Track newly inserted objects
+#         if isinstance(obj, FourNationChessRoom):
+#             cache.delete("room/" + str(obj.id))
+#         if isinstance(obj, User4NC):
+#             cache.delete("user4nc/" + str(obj.id))
+#         if isinstance(obj, User):
+#             cache.delete("user/" + str(obj.id))
+
+
+# 监听数据库变化，删除缓存. 之所以这样做，因为监听after_commit并不对cascade delete起作用，必须单独监听after_delete，所以干脆全部分开写
+@event.listens_for(User, 'after_insert')
+@event.listens_for(User, 'after_update')
+@event.listens_for(User, 'after_delete')
+@event.listens_for(FourNationChessRoom, 'after_insert')
+@event.listens_for(FourNationChessRoom, 'after_update')
+@event.listens_for(FourNationChessRoom, 'after_delete')
+@event.listens_for(User4NC, 'after_insert')
+@event.listens_for(User4NC, 'after_update')
+@event.listens_for(User4NC, 'after_delete')
+def delete_cache_after_commit(mapper, connection, target):
+    with app.app_context():
+        if isinstance(target, User):
+            cache.delete("user/" + str(target.id))
+        elif isinstance(target, FourNationChessRoom):
+            cache.delete("room/" + str(target.id))
+        elif isinstance(target, User4NC):
+            cache.delete("user4nc/" + str(target.id))
 
