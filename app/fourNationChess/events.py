@@ -116,7 +116,7 @@ def add_reconnect_timer(room_id, room): # 添加重连倒计时任务，主要�
 def on_join(data):
     # 用户的socket链接建立成功，默认添加用户到观众。 data={"room_id":room_id, "password":password}
     sid = request.sid # type: ignore
-    uid = current_user.id if current_user else None # type: ignore
+    uid = current_user.id if current_user.is_authenticated else None # type: ignore
     # 检查参数合法性
     if not isinstance(data["room_id"], int) or data["room_id"] not in range(1, 101):
         emit("room reject", {"message": "房间号字段不合法\nInvalid parameters for room_id"}, to=sid, namespace="/4ncRoom")
