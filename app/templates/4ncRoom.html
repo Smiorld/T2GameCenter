@@ -5,8 +5,8 @@
     crossorigin="anonymous"></script>
 <script type="text/javascript" charset="utf-8">
     var socket = io('/4ncRoom');
-    var uid ={% if current_user.is_authenticated %} {{ current_user.id }} {% else %} null {% endif %};
-    var uname ={% if current_user.is_authenticated %} "{{ current_user.username }}" {% else %} null {% endif %};
+    var uid = {% if current_user.is_authenticated %} { { current_user.id } } {% else %} null {% endif %};
+    var uname = {% if current_user.is_authenticated %} "{{ current_user.username }}" {% else %} null {% endif %};
     var sid = null;
     var timer = setInterval(function () {
         let timer = document.getElementById('countdown_timer');
@@ -17,6 +17,12 @@
             }// it's a fake timer for user, the real time-out logic is on serverside
         }
     }, 1000);
+
+    window.addEventListener("popstate", function (event) {
+        // Handle the navigation event here
+        // Call your socket function or perform other actions
+        scoket = io('/4ncRoom');
+    });
 
     socket.on('update room', function (data) {
         update_room(data);
@@ -55,7 +61,7 @@
         // data={ 'common_data': common_data}, 'specified_data':specified_data  }
         //common_data是所有玩家都同步的公共公开的信息，specified_data是针对这个用户发送的数据，每个人都是不一样的。
         // 本函数的作用是根据data里面的信息，更新本页面的显示、客户端的内容储存。
-        
+
     }
 
     function emit_sit_down(player_position) {
