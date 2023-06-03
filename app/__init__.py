@@ -42,6 +42,11 @@ def create_app(make_db=False, delete_room_on_launch=True,debug=False) -> Flask:
     
 
     db.init_app(app)
+    socketio.init_app(app)
+    login_manager.init_app(app)
+    cache.init_app(app)
+    csrf.init_app(app)
+
     if make_db:
         with app.app_context():
             from . import models
@@ -56,11 +61,6 @@ def create_app(make_db=False, delete_room_on_launch=True,debug=False) -> Flask:
             db.session.commit()
             cache.clear()
 
-
-    socketio.init_app(app)
-    login_manager.init_app(app)
-    cache.init_app(app)
-    csrf.init_app(app)
     return app
 
 from . import models
