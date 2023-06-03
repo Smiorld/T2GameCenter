@@ -18,31 +18,38 @@
         }
     }, 1000);
 
-    socket.on('update room',function(data){
+    socket.on('update room', function (data) {
         update_room(data);
     });
 
     socket.on('connect', function () {
         // if successfully connect to the server, attempt to join the room
-        // account system not implemented yet, so a player is allowed to join multiple rooms for multiple times.
         console.log('connected to the server, trying to join the room');
         sid = socket.id;
         socket.emit('join', { 'room_id': {{ room_id }}, 'password': null});
-        
-        {% if current_user.is_authenticated %}
-           uid = {{ current_user.id }};
-           uname = "{{ current_user.username }}";
-        {% endif %}
+
+    {% if current_user.is_authenticated %}
+    uid = {{ current_user.id }};
+    uname = "{{ current_user.username }}";
+    {% endif %}
     });
 
 
 
-    socket.on('room reject', function(data){
-        // if the server reject the request to join the room, redirect to the home page and flash it
+    socket.on('room reject', function (data) {
+        // TODO if the server reject the request to join the room, redirect to the home page and flash it
+        console.log('room reject you.' + data['message']);
+    });
+
+    socket.on('room delete', function (data) {
+        // 该函数用于通知游客客户端，本房间由于没有非游客用户了而被销毁了，用户点击确认后跳转主页。
+        alert('本房间由于没有非游客用户，已经被销毁了！');
+        console.log('room delete.' + data['message']);
+        window.location.href = window.location.origin;
     });
 
 
-    function update_room(data){
+    function update_room(data) {
         // 这几乎是最重要的一个函数，用于更新房间信息。服务端接受到任何房间内的信息变动，都会触发调用本函数的event。
         // 首先是data里面的信息，data是一个字典，包含了房间的所有信息：room实例的字典化，所有在本房间的玩家信息字典化，游戏信息字典化。
         // data={ 'common_data': common_data}, 'specified_data':specified_data  }
@@ -50,10 +57,24 @@
         // 本函数的作用是根据data里面的信息，更新本页面的显示、客户端的内容储存。
     }
 
-    function send_join_player(player_position){
+    function emit_sit_down(player_position) {
         // 玩家点击入座按钮后，发送入座信息给服务器. data={"room_id":room_id, "player_position":int(1-4)}
-        socket.emit('join player', {'room_id':{{ room_id }}, 'player_position':player_position});
+        socket.emit('sit down', { 'room_id': {{ room_id }}, 'player_position': player_position});
+    }
 
+    function emit_stand_up() {
+        // 玩家点击站起按钮后，发送站起信息给服务器. data={"room_id":room_id}
+        socket.emit('stand up', { 'room_id': {{ room_id }}});
+    }
+
+    function emit_get_ready() {
+        // 玩家点击准备按钮后，发送准备信息给服务器. data={"room_id":room_id}
+        socket.emit('get ready', { 'room_id': {{ room_id }}});
+    }
+
+    function emit_move_action() {
+        // 玩家点击下棋按钮后，发送下棋消息给服务器. data={"room_id":room_id, "move":int(1-4)}
+        socket.emit('move action', { 'room_id': {{ room_id }}});
     }
 
 
@@ -63,4 +84,37 @@
 
 {% endblock %}
 {% block content %}
+<div class="container">
+    <div class="row">
+        玩家1:<span id="player1_username">null</span>
+    </div>
+    <div class="row">
+        ————————————————————————————————————————————————————
+    </div>
+    <div class="row">
+        玩家2:<span id="player2_username">null</span>
+    </div>
+    <div class="row">
+        ————————————————————————————————————————————————————
+    </div>
+    <div class="row">
+        玩家3:<span id="player3_username">null</span>
+    </div>
+    <div class="row">
+        ————————————————————————————————————————————————————
+    </div>
+    <div class="row">
+        玩家4:<span id="player4_username">null</span>
+    </div>
+    <div class="row">
+        ————————————————————————————————————————————————————
+    </div>
+    <div class="row">
+        您的信息：<span id="your_status"></span>
+    </div>
+    <div class="row">
+        游戏状态：<span id="game_status"></span>
+    </div>
+
+</div>
 {% endblock %}

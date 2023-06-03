@@ -66,6 +66,9 @@ def reconnect_over_time(room_id): # 重连超时投降函数
                 for user in user4nc:
                     player_position = get_player_position(room_id, user.uid)
                     player_lose(room_id, player_position)
+                # 判负后，移除这些用户的user4nc信息以说明他们已经离开了房间
+                db.session.delete(user4nc)
+                db.session.commit()
                 who_win = is_game_over(room_id)
                 if who_win != 0:
                     # TODO:游戏结束，发送结束消息，结束游戏
@@ -220,6 +223,11 @@ def on_disconnect():
                     room.player4_id = None
                 db.session.commit()
                 leave_room(str(room.id)+"_player", sid, namespace="/4ncRoom")
+                if is_room_empty(room.id):
+                    # 如果房间空了，那么删除房间
+                    delete_room(room.id)
+                    emit("room delete", {"room_id": room.id}, to=str(room.id), namespace="/4ncRoom")
+                    return
                 emit_update_room(room.id)
                 return
         else:
@@ -227,6 +235,11 @@ def on_disconnect():
             db.session.delete(user4nc)
             db.session.commit()
             leave_room(room.id, sid, namespace="/4ncRoom")
+            if is_room_empty(room.id):
+                # 如果房间空了，那么删除房间
+                delete_room(room.id)
+                emit("room delete", {"room_id": room.id}, to=str(room.id), namespace="/4ncRoom")
+                return
             emit_update_room(room.id)
             return
 
@@ -595,8 +608,33 @@ def game_over(room_id):
         clear_cache(room_id)
         return
 
+def is_room_empty(room_id):
+    # 检定房间是否为空，如果为空，返回True，否则返回False
+    with app.app_context():
+        room_4nc = User4NC.query.filter_by(rid=room_id).all()
+        room = get_room_by_id(room_id)
+        if room is None:
+            # TODO 房间不存在，向用户返回错误
+            return True
+        if room_4nc is None:
+            # TODO 房间不存在，向用户返回错误
+            return True
+        if len(room_4nc) == 0:
+            return True
+        else:
+            return False
 
-
+def delete_room(room_id):
+    # 删除该room的row + 删除所有仅服务器缓存
+    with app.app_context():
+        room = get_room_by_id(room_id)
+        if room is None:
+            # TODO 房间不存在，向用户返回错误
+            return False
+        db.session.delete(room)
+        db.session.commit()
+        clear_cache(room_id)
+        return True
 
 def get_player_position(room_id, uid):
     with app.app_context():
