@@ -6,7 +6,7 @@
         <div class="col" >
             <div class="card mb-1" >
                 <div class="card-body">
-                    <p class="card-text">{% if room.is_private %}🔒{% endif %}房间{{room.id}}.{% if room.player1_id %}🙎‍♂️{%else%}👤{%endif%}{% if room.player2_id %}🧝{%else%}👤{%endif%}{% if room.player3_id %}🙎‍♂️{%else%}👤{%endif%}{% if room.player4_id %}🧝{%else%}👤{%endif%} <a href="#" class="btn btn-primary">进入</a></p>
+                    <p class="card-text">{% if room.is_private %}🔒{% endif %}房间{{room.id}}.{% if room.player1_id %}🙎‍♂️{%else%}👤{%endif%}{% if room.player2_id %}🧝{%else%}👤{%endif%}{% if room.player3_id %}🙎‍♂️{%else%}👤{%endif%}{% if room.player4_id %}🧝{%else%}👤{%endif%} <a href="{{url_for('lobby.FourNationChessGameRoom', room_id=room.id)}}" class="btn btn-primary">进入</a></p>
                 </div>
             </div>
         </div>
