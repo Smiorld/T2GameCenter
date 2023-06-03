@@ -18,11 +18,6 @@
         }
     }, 1000);
 
-    window.addEventListener("popstate", function (event) {
-        // Handle the navigation event here
-        // Call your socket function or perform other actions
-        socket = io('/4ncRoom');
-    });
 
     socket.on('update room', function (data) {
         update_room(data);
