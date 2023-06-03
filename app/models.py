@@ -1,6 +1,6 @@
 from email.policy import default
 from flask_login import UserMixin
-from sqlalchemy import null
+from sqlalchemy import null, event
 from app import app, db, login_manager, cache
 from sqlalchemy.orm import backref
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -17,7 +17,6 @@ class User(UserMixin, db.Model):
     hashed_password = db.Column(db.String(128))
 
     # relationship
-    four_nation_chess_room = db.relationship('FourNationChessRoom', backref='user')
     user_4nc = db.relationship('User4NC', backref='user')
 
     @property
@@ -40,17 +39,16 @@ class FourNationChessRoom(db.Model):
     is_private = db.Column(db.Boolean, nullable=False, default=False)
     god_perspective = db.Column(db.Boolean, nullable=False, default=False)
     password = db.Column(db.Integer, nullable=True)
-    player1_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)
-    player2_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)
-    player3_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)
-    player4_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)
+    player1_id = db.Column(db.Integer, nullable=True)
+    player2_id = db.Column(db.Integer, nullable=True)
+    player3_id = db.Column(db.Integer, nullable=True)
+    player4_id = db.Column(db.Integer, nullable=True)
     each_turn_time = db.Column(db.Integer, nullable=False, default=60)
     is_game_started = db.Column(db.Boolean, nullable=False, default=False)
     pause = db.Column(db.Boolean, nullable=False, default=False)
 
     # relationship
     user_4nc = db.relationship('User4NC', backref='four_nation_chess_room', cascade='all, delete') # when a room is deleted, all corresponding user-room relationship will be deleted for safety.
-
 
 class User4NC(db.Model):
     # this table is used to store user-room relationship
@@ -80,21 +78,46 @@ class FourNationChessHistory(db.Model):
 def load_user(user_id):
     return User.query.get(int(user_id))
 
-@db.event.listens_for(FourNationChessRoom, 'after_commit')
-def delete_room_after_commit(mapper, connection, target):
-    with app.app_context():
-    # 删除缓存项
-        cache.delete("room/"+str(target.id))
+# @db.event.listens_for(FourNationChessRoom, 'after_flush')
+# def delete_room_after_commit(mapper, connection, target):
+#     with app.app_context():
+#     # 删除缓存项
+#         cache.delete("room/"+str(target.id))
 
-@db.event.listens_for(User4NC, 'after_commit')
-def delete_user4nc_after_commit(mapper, connection, target):
-    with app.app_context():
-    # 删除缓存项
-        cache.delete("user4nc/"+str(target.uid))
+# @db.event.listens_for(User4NC, 'after_flush')
+# def delete_user4nc_after_commit(mapper, connection, target):
+#     with app.app_context():
+#     # 删除缓存项
+#         cache.delete("user4nc/"+str(target.uid))
 
-@db.event.listens_for(User, 'after_commit')
-def delete_user_after_commit(mapper, connection, target):
-    with app.app_context():
-    # 删除缓存项
-        cache.delete("user/"+str(target.id))
+# @db.event.listens_for(User, 'after_flush')
+# def delete_user_after_commit(mapper, connection, target):
+#     with app.app_context():
+#     # 删除缓存项
+#         cache.delete("user/"+str(target.id))
+
+@event.listens_for(db.session, "after_commit")
+def delete_cache_after_commit(session):
+    for obj in session.dirty:  # Track updated objects
+        if isinstance(obj, FourNationChessRoom):
+            cache.delete("room/" + str(obj.id))
+        if isinstance(obj, User4NC):
+            cache.delete("user4nc/" + str(obj.id))
+        if isinstance(obj, User):
+            cache.delete("user/" + str(obj.id))
+            
+    for obj in session.deleted:  # Track deleted objects
+        if isinstance(obj, FourNationChessRoom):
+            cache.delete("room/" + str(obj.id))
+        if isinstance(obj, User4NC):
+            cache.delete("user4nc/" + str(obj.id))
+        if isinstance(obj, User):
+            cache.delete("user/" + str(obj.id))
+    for obj in session.new:  # Track newly inserted objects
+        if isinstance(obj, FourNationChessRoom):
+            cache.delete("room/" + str(obj.id))
+        if isinstance(obj, User4NC):
+            cache.delete("user4nc/" + str(obj.id))
+        if isinstance(obj, User):
+            cache.delete("user/" + str(obj.id))
 
