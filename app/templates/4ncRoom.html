@@ -21,7 +21,7 @@
     window.addEventListener("popstate", function (event) {
         // Handle the navigation event here
         // Call your socket function or perform other actions
-        scoket = io('/4ncRoom');
+        socket = io('/4ncRoom');
     });
 
     socket.on('update room', function (data) {
