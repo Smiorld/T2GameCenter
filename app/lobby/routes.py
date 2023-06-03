@@ -14,7 +14,9 @@ from .. import db, cache, login_manager
 from ..models import User, FourNationChessRoom
 from flask_login import login_user, logout_user, current_user, login_required
 from app.forms import LoginForm, RegistrationForm, FourNationChessForm
+import threading
 
+lock_4nc = threading.Lock()
 
 @lobby.route("/", methods=["GET", "POST"])
 @lobby.route("/index", methods=["GET", "POST"])
@@ -76,22 +78,27 @@ def FourNationChessCreateRoom():
         return render_template("4ncCreateRoom.html", form=form)
     else:
         # post method, 直接返回创建后的房间，或者返回错误信息
-        if form.validate_on_submit():
-            try:
-                room = FourNationChessRoom(is_private=form.is_private.data, god_perspective=form.god_perspective.data, password=form.password.data) # type: ignore
-                if room.is_private:
-                    room.password = form.password.data
-                db.session.add(room)
-                db.session.commit()
-                flash("创建成功！您已进入创建好的房间。","success")
-                return redirect(url_for("lobby.FourNationChessGameRoom", room_id=room.id))
-            except Exception as e:
-                db.session.rollback()
-                flash("创建失败，请重试。", "warning")
+        with lock_4nc:
+            if form.validate_on_submit():
+                try:
+                    count = FourNationChessRoom.query.count()
+                    if count >= 100:
+                        flash("房间数量已达上限，请稍后再试。", "warning")
+                        return render_template("4ncCreateRoom.html", form=form)
+                    room = FourNationChessRoom(is_private=form.is_private.data, god_perspective=form.god_perspective.data, password=form.password.data) # type: ignore
+                    if room.is_private:
+                        room.password = form.password.data
+                    db.session.add(room)
+                    db.session.commit()
+                    flash("创建成功！您已进入创建好的房间。","success")
+                    return redirect(url_for("lobby.FourNationChessGameRoom", room_id=room.id))
+                except Exception as e:
+                    db.session.rollback()
+                    flash("创建失败，请重试。", "warning")
+                    return render_template("4ncCreateRoom.html", form=form)
+            else:
+                flash("验证未通过，创建失败，请重试。", "warning")
                 return render_template("4ncCreateRoom.html", form=form)
-        else:
-            flash("验证未通过，创建失败，请重试。", "warning")
-            return render_template("4ncCreateRoom.html", form=form)
         
 @lobby.route("/4ncRoom/<int:room_id>", methods=["GET", "POST"])
 def FourNationChessGameRoom(room_id):

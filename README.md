@@ -27,3 +27,7 @@ try contact T2 for test case.
 对于数据里有的数据，做好读取的方法就行，每次要拿数据的时候自动优先从缓存拿，没有再从数据库拿，往数据库更新数据的时候不用顾虑缓存，服务器监听事件会自动把不同步的缓存删除；
 数据库里没有的数据，一定要手动设置一个超长的缓存过期时间以防万一。
 目前主要集中在完成后端需要响应的事件，完成的有join, disconnect, sit down, stand up, 下一步是get ready, give up, move action.
+
+06/02/2023 已完成get ready, give up, game over，超时判负。下一步是完成move action，然后就可以步入测试阶段了
+
+06/03/2023 完成了move action。后端响应均已完成， 来到前端代码辣。
