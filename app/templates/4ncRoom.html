@@ -154,7 +154,12 @@
                 // 用户尚未落座，修改按钮状态
                 for (let i = 0; i < button_groups.length; i++) {
                     button_groups[i].hidden = false;
-                    button_groups[i].children[0].hidden = false; //坐下
+                    if ( data['common_data']['room']['player' + (i + 1) + '_id'] ) {
+                        button_groups[i].children[0].hidden = true; //坐下
+                    }
+                    else {
+                        button_groups[i].children[0].hidden = false; //坐下
+                    }
                     button_groups[i].children[1].hidden = true; //准备
                     button_groups[i].children[2].hidden = true; //取消准备
                     button_groups[i].children[3].hidden = true; //离座
