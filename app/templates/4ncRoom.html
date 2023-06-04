@@ -88,11 +88,30 @@
         let player4_info = document.getElementById('player4_info');
         let your_status = document.getElementById('your_status');
         let game_status = document.getElementById('game_status');
-
-        player1_info.innerHTML = "玩家1：" + data['common_data']['player1']['username'] + "，准备状态：" + data['common_data']['is_ready'][0];
-        player2_info.innerHTML = "玩家2：" + data['common_data']['player2']['username'] + "，准备状态：" + data['common_data']['is_ready'][1];
-        player3_info.innerHTML = "玩家3：" + data['common_data']['player3']['username'] + "，准备状态：" + data['common_data']['is_ready'][2];
-        player4_info.innerHTML = "玩家4：" + data['common_data']['player4']['username'] + "，准备状态：" + data['common_data']['is_ready'][3];
+        if (data['common_data']['player1']){
+            player1_info.innerHTML = "玩家1：" + data['common_data']['player1']['username'] + "，准备状态：" + data['common_data']['is_ready'][0];
+        }
+        else{
+            player1_info.innerHTML = "玩家1：null，准备状态：null";
+        }
+        if (data['common_data']['player2']) {
+            player2_info.innerHTML = "玩家2：" + data['common_data']['player2']['username'] + "，准备状态：" + data['common_data']['is_ready'][1];
+        }
+        else {
+            player2_info.innerHTML = "玩家2：null，准备状态：null";
+        }
+        if (data['common_data']['player3']) {
+            player3_info.innerHTML = "玩家3：" + data['common_data']['player3']['username'] + "，准备状态：" + data['common_data']['is_ready'][2];
+        }
+        else {
+            player3_info.innerHTML = "玩家3：null，准备状态：null";
+        }
+        if (data['common_data']['player4']) {
+            player4_info.innerHTML = "玩家4：" + data['common_data']['player4']['username'] + "，准备状态：" + data['common_data']['is_ready'][3];
+        }
+        else {
+            player4_info.innerHTML = "玩家4：null，准备状态：null";
+        }
         your_status.innerHTML = "id:" + uid + " name:" + uname;
 
         //更新按钮状态
@@ -130,40 +149,40 @@
             }
             else {
                 // 用户尚未落座，修改按钮状态
-                for (let i = 0; i < button_group.length; i++) {
-                    button_group[i].hidden = false;
-                    button_group[i].children[0].hidden = false; //坐下
-                    button_group[i].children[1].hidden = true; //准备
-                    button_group[i].children[2].hidden = true; //取消准备
-                    button_group[i].children[3].hidden = true; //离座
-                    button_group[i].children[4].hidden = true; //下棋
-                    button_group[i].children[5].hidden = true; //投降
+                for (let i = 0; i < button_groups.length; i++) {
+                    button_groups[i].hidden = false;
+                    button_groups[i].children[0].hidden = false; //坐下
+                    button_groups[i].children[1].hidden = true; //准备
+                    button_groups[i].children[2].hidden = true; //取消准备
+                    button_groups[i].children[3].hidden = true; //离座
+                    button_groups[i].children[4].hidden = true; //下棋
+                    button_groups[i].children[5].hidden = true; //投降
                 }
                 return;
             }
             // 游戏没开始且 用户已落座，修改按钮状态
-            for (let i = 0; i < 4; i++) {
+            for (let i = 0; i < button_groups.length; i++) {
                 if (i == player_index) {
-                    button_group[i].hidden = false;
+                    button_groups[i].hidden = false;
                 }
                 else {
                     button_groups[i].hidden = true;
                 }
             }
-            button_group[player_index].children[0].hidden = true; //坐下
+            button_groups[player_index].children[0].hidden = true; //坐下
             if (data['common_data']['is_ready'][player_index]) {
                 // 如果玩家已经准备，那么显示取消准备按钮
-                button_group[player_index].children[1].hidden = true; //准备
-                button_group[player_index].children[2].hidden = false; //取消准备
+                button_groups[player_index].children[1].hidden = true; //准备
+                button_groups[player_index].children[2].hidden = false; //取消准备
             }
             else {
                 // 如果玩家未准备，那么显示准备按钮
-                button_group[player_index].children[1].hidden = false; //准备
-                button_group[player_index].children[2].hidden = true; //取消准备
+                button_groups[player_index].children[1].hidden = false; //准备
+                button_groups[player_index].children[2].hidden = true; //取消准备
             }
-            button_group[player_index].children[3].hidden = false; //离座
-            button_group[player_index].children[4].hidden = true; //下棋
-            button_group[player_index].children[5].hidden = true; //投降  
+            button_groups[player_index].children[3].hidden = false; //离座
+            button_groups[player_index].children[4].hidden = true; //下棋
+            button_groups[player_index].children[5].hidden = true; //投降  
             return;     
         }
         else {
@@ -171,8 +190,8 @@
             if (data['common_data']['room']['pause']) {
                 //如果处于暂停态，不给按钮
                 game_status.innerHTML = "游戏已暂停，等待掉线玩家重连中";
-                for (let i = 0; i < button_group.length; i++) {
-                    button_group[i].hidden = true;
+                for (let i = 0; i < button_groups.length; i++) {
+                    button_groups[i].hidden = true;
                 }
             }
             else {
@@ -198,37 +217,37 @@
                 }
                 else {
                     // 用户尚未落座，修改按钮状态
-                    for (let i = 0; i < button_group.length; i++) {
-                        button_group[i].hidden = true;
-                        button_group[i].children[0].hidden = true; //坐下
-                        button_group[i].children[1].hidden = true; //准备
-                        button_group[i].children[2].hidden = true; //取消准备
-                        button_group[i].children[3].hidden = true; //离座
-                        button_group[i].children[4].hidden = true; //下棋
-                        button_group[i].children[5].hidden = true; //投降
+                    for (let i = 0; i < button_groups.length; i++) {
+                        button_groups[i].hidden = true;
+                        button_groups[i].children[0].hidden = true; //坐下
+                        button_groups[i].children[1].hidden = true; //准备
+                        button_groups[i].children[2].hidden = true; //取消准备
+                        button_groups[i].children[3].hidden = true; //离座
+                        button_groups[i].children[4].hidden = true; //下棋
+                        button_groups[i].children[5].hidden = true; //投降
                     }
                     return;
                 }
                 if( player_index+1 == data['common_data']['room']['current_player']){
                     // 如果是当前玩家的回合，那么显示下棋按钮
-                    button_group[player_index].hidden = false;
-                    button_group[player_index].children[0].hidden = true; //坐下
-                    button_group[player_index].children[1].hidden = true; //准备
-                    button_group[player_index].children[2].hidden = true; //取消准备
-                    button_group[player_index].children[3].hidden = true; //离座
-                    button_group[player_index].children[4].hidden = false; //下棋
-                    button_group[player_index].children[5].hidden = false; //投降
+                    button_groups[player_index].hidden = false;
+                    button_groups[player_index].children[0].hidden = true; //坐下
+                    button_groups[player_index].children[1].hidden = true; //准备
+                    button_groups[player_index].children[2].hidden = true; //取消准备
+                    button_groups[player_index].children[3].hidden = true; //离座
+                    button_groups[player_index].children[4].hidden = false; //下棋
+                    button_groups[player_index].children[5].hidden = false; //投降
                     return;
                 }
                 else{
                     // 如果不是当前玩家的回合，那么不显示下棋按钮
-                    button_group[player_index].hidden = false;
-                    button_group[player_index].children[0].hidden = true; //坐下
-                    button_group[player_index].children[1].hidden = true; //准备
-                    button_group[player_index].children[2].hidden = true; //取消准备
-                    button_group[player_index].children[3].hidden = true; //离座
-                    button_group[player_index].children[4].hidden = true; //下棋
-                    button_group[player_index].children[5].hidden = false; //投降
+                    button_groups[player_index].hidden = false;
+                    button_groups[player_index].children[0].hidden = true; //坐下
+                    button_groups[player_index].children[1].hidden = true; //准备
+                    button_groups[player_index].children[2].hidden = true; //取消准备
+                    button_groups[player_index].children[3].hidden = true; //离座
+                    button_groups[player_index].children[4].hidden = true; //下棋
+                    button_groups[player_index].children[5].hidden = false; //投降
                     return;
                 }
 
@@ -246,27 +265,31 @@
     }
     function emit_sit_down(player_position) {
         // 玩家点击入座按钮后，发送入座信息给服务器. data={"room_id":room_id, "player_position":int(1-4)}
-        socket.emit('sit down', { 'room_id': {{ room_id }}, 'player_position': player_position
-    });
+        console.log('emit sit down:'+player_position);
+        socket.emit('sit down', { 'room_id': {{ room_id }}, 'player_position': player_position});
     }
 
     function emit_stand_up() {
         // 玩家点击站起按钮后，发送站起信息给服务器. data={"room_id":room_id}
+        console.log('emit stand up')
         socket.emit('stand up', { 'room_id': {{ room_id }}});
     }
 
     function emit_get_ready() {
         // 玩家点击准备按钮后，发送准备信息给服务器. data={"room_id":room_id}
+        console.log('emit get ready')
         socket.emit('get ready', { 'room_id': {{ room_id }}});
     }
 
     function emit_cancel_ready() {
         // 玩家点击取消准备按钮后，发送取消准备信息给服务器. data={"room_id":room_id}
+        console.log('emit cancel ready')
         socket.emit('cancel ready', { 'room_id': {{ room_id }}});
     }
 
     function emit_move_action() {
         // 玩家点击下棋按钮后，发送下棋消息给服务器. data={"room_id":room_id, "move":int(1-4)}
+        console.log('emit move action')
         socket.emit('move action', { 'room_id': {{ room_id }}});
     }
 
@@ -288,7 +311,7 @@
             <span id='player1_info'>玩家1：null，准备状态：null</span>
             <div id="p1-btn-group" class="btn-group btn-group-sm" role="group" aria-label="player1 button group" hidden>
                 <button id="sit-down" type="button" class="btn btn-primary"
-                    onclick="disableButton(this);emit_sit_down();">坐下</button>
+                    onclick="disableButton(this);emit_sit_down(1);">坐下</button>
                 <button id="get-ready" type="button" class="btn btn-primary"
                     onclick="disableButton(this);emit_get_ready();">准备</button>
                 <button id="cancel-ready" type="button" class="btn btn-primary"
@@ -309,10 +332,10 @@
     </div>
     <div class="row">
         <div class="col">
-            <span id='player1_info'>玩家1：null，准备状态：null</span>
-            <div id="p1-btn-group" class="btn-group btn-group-sm" role="group" aria-label="player1 button group" hidden>
+            <span id='player2_info'>玩家2：null，准备状态：null</span>
+            <div id="p2-btn-group" class="btn-group btn-group-sm" role="group" aria-label="player2 button group" hidden>
                 <button id="sit-down" type="button" class="btn btn-primary"
-                    onclick="disableButton(this);emit_sit_down();">坐下</button>
+                    onclick="disableButton(this);emit_sit_down(2);">坐下</button>
                 <button id="get-ready" type="button" class="btn btn-primary"
                     onclick="disableButton(this);emit_get_ready();">准备</button>
                 <button id="cancel-ready" type="button" class="btn btn-primary"
@@ -333,10 +356,10 @@
     </div>
     <div class="row">
         <div class="col">
-            <span id='player1_info'>玩家1：null，准备状态：null</span>
-            <div id="p1-btn-group" class="btn-group btn-group-sm" role="group" aria-label="player1 button group" hidden>
+            <span id='player3_info'>玩家3：null，准备状态：null</span>
+            <div id="p3-btn-group" class="btn-group btn-group-sm" role="group" aria-label="player3 button group" hidden>
                 <button id="sit-down" type="button" class="btn btn-primary"
-                    onclick="disableButton(this);emit_sit_down();">坐下</button>
+                    onclick="disableButton(this);emit_sit_down(3);">坐下</button>
                 <button id="get-ready" type="button" class="btn btn-primary"
                     onclick="disableButton(this);emit_get_ready();">准备</button>
                 <button id="cancel-ready" type="button" class="btn btn-primary"
@@ -357,10 +380,10 @@
     </div>
     <div class="row">
         <div class="col">
-            <span id='player1_info'>玩家1：null，准备状态：null</span>
-            <div id="p1-btn-group" class="btn-group btn-group-sm" role="group" aria-label="player1 button group" hidden>
+            <span id='player4_info'>玩家4：null，准备状态：null</span>
+            <div id="p4-btn-group" class="btn-group btn-group-sm" role="group" aria-label="player4 button group" hidden>
                 <button id="sit-down" type="button" class="btn btn-primary"
-                    onclick="disableButton(this);emit_sit_down();">坐下</button>
+                    onclick="disableButton(this);emit_sit_down(4);">坐下</button>
                 <button id="get-ready" type="button" class="btn btn-primary"
                     onclick="disableButton(this);emit_get_ready();">准备</button>
                 <button id="cancel-ready" type="button" class="btn btn-primary"

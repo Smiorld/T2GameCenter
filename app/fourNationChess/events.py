@@ -255,7 +255,8 @@ def on_disconnect():
 @socketio.on("sit down", namespace="/4ncRoom")   
 def on_sit_down(data):
     if not current_user.is_authenticated: # type: ignore
-        # TODO 用户未登录，向用户返回错误
+        # 游客乱请求，不理他
+        app.logger.info('sit down 游客乱请求')
         return
     # 用户点击了入座. 先validate能不能入座 data={"room_id":room_id, "player_position":int(1-4)}
     sid = request.sid # type: ignore
@@ -263,22 +264,26 @@ def on_sit_down(data):
 
     # 检查参数合法性
     if not isinstance(data["room_id"], int) or data["room_id"] not in range(1, 101):
-        # TODO 房间号字段不合法，向用户返回错误
+        #房间号字段不合法，向用户返回错误
+        app.logger.info('sit down 房间号字段不合法')
         return
     if not isinstance(data["player_position"], int) or data["player_position"] not in range(1, 5):
-        # TODO 位置字段不合法，向用户返回错误
+        #位置字段不合法，向用户返回错误
+        app.logger.info('sit down 位置字段不合法')
         return
     # 房间信息
     with lock_list[data["room_id"]]:
         room = get_room_by_id(data["room_id"])
         user4nc = get_user4nc_by_uid(uid)
 
-        if room is None or user4nc is None or room.is_game_started : # TODO 不该发生的事，向用户返回错误 并 打印
+        if room is None or user4nc is None or room.is_game_started : # 不该发生的事，向用户返回错误 并 打印
+            app.logger.info('sit down 房间不存在 或 用户不在房间 或 游戏已经开始')
             return
         
         # 房间存在且游戏未开始，看看该位置是不是已经入座了
         if (data["player_position"] == 1 and room.player1_id is not None) or (data["player_position"] == 2 and room.player2_id is not None) or (data["player_position"] == 3 and room.player3_id is not None) or (data["player_position"] == 4 and room.player4_id is not None):
-            # TODO 位置已经有人了，向用户返回错误
+            # 位置已经有人了，向用户返回错误
+            app.logger.info('sit down 位置已经有人了')
             return
         
         # 位置没人，那么将用户的uid写入房间对应的位置，且在后端将本用户分配到玩家room 而非观众room
@@ -292,6 +297,7 @@ def on_sit_down(data):
             room.player4_id = uid
         else:
             # TODO 位置不合法，向用户返回错误
+            app.logger.info('sit down 位置参数不合法')
             return
         db.session.commit()
         # 将用户移除观众room 分配到玩家room
