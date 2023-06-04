@@ -22,6 +22,8 @@
 
     socket.on('update room', function (data) {
         console.log('update room event triggered');
+        // on update, firstly enable all buttons
+        enableAllButtons('output_panel');
         update_room(data);
     });
 
@@ -89,10 +91,10 @@
         let player4_info = document.getElementById('player4_info');
         let your_status = document.getElementById('your_status');
         let game_status = document.getElementById('game_status');
-        if (data['common_data']['player1']){
+        if (data['common_data']['player1']) {
             player1_info.innerHTML = "玩家1：" + data['common_data']['player1']['username'] + "，准备状态：" + data['common_data']['is_ready'][0];
         }
-        else{
+        else {
             player1_info.innerHTML = "玩家1：null，准备状态：null";
         }
         if (data['common_data']['player2']) {
@@ -184,7 +186,7 @@
             button_groups[player_index].children[3].hidden = false; //离座
             button_groups[player_index].children[4].hidden = true; //下棋
             button_groups[player_index].children[5].hidden = true; //投降  
-            return;     
+            return;
         }
         else {
             // 如果游戏已经开始
@@ -229,7 +231,7 @@
                     }
                     return;
                 }
-                if( player_index+1 == data['common_data']['room']['current_player']){
+                if (player_index + 1 == data['common_data']['room']['current_player']) {
                     // 如果是当前玩家的回合，那么显示下棋按钮
                     button_groups[player_index].hidden = false;
                     button_groups[player_index].children[0].hidden = true; //坐下
@@ -240,7 +242,7 @@
                     button_groups[player_index].children[5].hidden = false; //投降
                     return;
                 }
-                else{
+                else {
                     // 如果不是当前玩家的回合，那么不显示下棋按钮
                     button_groups[player_index].hidden = false;
                     button_groups[player_index].children[0].hidden = true; //坐下
@@ -266,7 +268,7 @@
     }
     function emit_sit_down(player_position) {
         // 玩家点击入座按钮后，发送入座信息给服务器. data={"room_id":room_id, "player_position":int(1-4)}
-        console.log('emit sit down:'+player_position);
+        console.log('emit sit down:' + player_position);
         socket.emit('sit down', { 'room_id': {{ room_id }}, 'player_position': player_position});
     }
 
@@ -299,6 +301,17 @@
         element.disabled = true;
     }
 
+    function enableAllButtons(containerId) {
+        var container = document.getElementById(containerId);
+        if (container) {
+            var buttons = container.getElementsByTagName('button');
+            for (var i = 0; i < buttons.length; i++) {
+                buttons[i].disabled = false;
+            }
+        }
+    }
+
+
 
 </script>
 
@@ -306,7 +319,7 @@
 
 {% endblock %}
 {% block content %}
-<div class="container">
+<div id='output_panel' class="container">
     <div class="row">
         <div class="col">
             <span id='player1_info'>玩家1：null，准备状态：null</span>

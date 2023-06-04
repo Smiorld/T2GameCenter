@@ -288,6 +288,11 @@ def on_sit_down(data):
             return
         
         # 位置没人，那么将用户的uid写入房间对应的位置，且在后端将本用户分配到玩家room 而非观众room
+        player_position = get_player_position(data["room_id"], uid)
+        if player_position != 0:
+            # 用户已经在座位上，向用户返回错误
+            app.logger.info('sit down 用户已经在座位上')
+            return
         if data["player_position"] == 1:
             room.player1_id = uid
         elif data["player_position"] == 2:
@@ -301,9 +306,6 @@ def on_sit_down(data):
             app.logger.info('sit down 位置参数不合法')
             return
         db.session.commit()
-        app.logger.info(room.player1_id)
-        room = get_room_by_id(data["room_id"])
-        app.logger.info(room.player1_id)
         # 将用户移除观众room 分配到玩家room
         leave_room(data["room_id"], sid, namespace="/4ncRoom")
         join_room(str(data['room_id'])+"_player", sid, namespace="/4ncRoom")
@@ -503,7 +505,6 @@ def on_move_action(data):
 
 def emit_update_room(room_id):
     with app.app_context():
-        app.logger.info('emit_update_room')
         # get the updated room object
         room = get_room_by_id(room_id)
         if room is None:
@@ -548,16 +549,12 @@ def emit_update_room(room_id):
 
         # 接下来将数据分发给房间内的所有人。p1-p4会拿到自己+对家的棋子数据，而观战者会拿到所有棋子数据 或 全盲（取决于god_perspective）。
         if player1_4nc is not None:
-            app.logger.info('emit_update_room player1_4nc')
             emit("update room", {'common_data':common_data,'specified_data':specified_data_1}, to=player1_4nc.sid, namespace="/4ncRoom") 
         if player2_4nc is not None:
-            app.logger.info('emit_update_room player2_4nc')
             emit("update room", {'common_data':common_data,'specified_data':specified_data_2}, to=player2_4nc.sid, namespace="/4ncRoom") 
         if player3_4nc is not None:
-            app.logger.info('emit_update_room player3_4nc')
             emit("update room", {'common_data':common_data,'specified_data':specified_data_3}, to=player3_4nc.sid, namespace="/4ncRoom") 
         if player4_4nc is not None:
-            app.logger.info('emit_update_room player4_4nc')
             emit("update room", {'common_data':common_data,'specified_data':specified_data_4}, to=player4_4nc.sid, namespace="/4ncRoom") 
         emit("update room", {'common_data':common_data,'specified_data':specified_data}, to=room_id, namespace="/4ncRoom")
         return
@@ -737,6 +734,8 @@ def get_room_by_id(room_id) -> FourNationChessRoom | None:
         if room is None:
             room = FourNationChessRoom.query.filter_by(id=room_id).first()
             cache.set("room/"+str(room_id), room)
+        else:
+            db.session.add(room)
         return room # type: ignore
 
 def get_user_by_id(user_id) -> User | None:
@@ -746,6 +745,8 @@ def get_user_by_id(user_id) -> User | None:
         if user is None:
             user = User.query.filter_by(id=user_id).first()
             cache.set("user/"+str(user_id), user)
+        else:
+            db.session.add(user)
         return user # type: ignore
 
 def get_user4nc_by_uid(user_id) -> User4NC | None:
@@ -755,6 +756,8 @@ def get_user4nc_by_uid(user_id) -> User4NC | None:
         if user4nc is None:
             user4nc = User4NC.query.filter_by(uid=user_id).first()
             cache.set("user4nc/"+str(user_id), user4nc)
+        else:
+            db.session.add(user4nc)
         return user4nc # type: ignore
     
 def get_is_lost(room_id) -> list[int] :
@@ -764,7 +767,6 @@ def get_is_lost(room_id) -> list[int] :
         if is_lost is None:
             is_lost = [False, False, False, False]
             cache.set("is_lost/"+str(room_id), is_lost, timeout=0)
-        
         return is_lost # type: ignore
 
 def get_is_ready(room_id) -> list[int] :
