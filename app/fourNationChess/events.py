@@ -152,13 +152,15 @@ def on_join(data):
                     db.session.commit()
                     add_turn_timer(room.id, room) # 添加回合倒计时任务
                     emit_update_room(room.id) # 更新房间信息，游戏继续
+                    return
                 else:
                     # 如果还有其他玩家处于等待重连状态，那么只更新房间信息，等待其他玩家重连
                     emit_update_room(room.id) # 更新房间信息，等待其他玩家重连           
                 return
-            # 用户不用重连，而是已经再另一个房间了，直接拒绝本次请求
-            emit("room reject", {"message": "您已经在其它房间\nYou are already in another room."}, to=sid, namespace="/4ncRoom")
-            return
+            else:
+                # 用户不用重连，而是已经再另一个房间了，直接拒绝本次请求
+                emit("room reject", {"message": "您已经在其它房间\nYou are already in another room."}, to=sid, namespace="/4ncRoom")
+                return
         else:
             # 用户不在其它房间，进入房间成功, 并且将用户信息写入数据库(看看用户是不是游客)
             if current_user.is_authenticated: # type: ignore
@@ -205,9 +207,17 @@ def on_disconnect():
                 # 调用断线重连倒计时函数，同时将旧的sid踢出房间，通知房间内的剩余玩家本事件的发生
                 add_reconnect_timer(room.id, room)
                 leave_room(str(room.id)+"_player", sid, namespace="/4ncRoom")
+                # 向房间所有人通知该玩家离线，触发客户端进入 重置重连倒计时 状态
+                emit("player disconnect", {"player_position": player_position}, to=str(room.id)+"_player", namespace="/4ncRoom")
+                emit("player disconnect", {"player_position": player_position}, to=str(room.id), namespace="/4ncRoom")
                 emit_update_room(room.id)
                 return
-            else:
+            elif room.is_game_started and is_lost[player_position-1] :
+                # 如果游戏已经开始且已经输了，那么只是将该玩家移出房间，保留其在room里的信息登记
+                leave_room(str(room.id)+"_player", sid, namespace="/4ncRoom")
+                db.session.delete(user4nc)
+                db.session.commit()
+            elif not room.is_game_started :
                 # 如果游戏未开始，那么取消用户准备，取消玩家入座，且移出房间
                 db.session.delete(user4nc)
                 player_cancel_ready(room.id, get_player_position(room.id, uid))
@@ -365,6 +375,34 @@ def on_get_ready(data):
         if is_game_ready(data["room_id"]):
             game_start(data["room_id"])
             add_turn_timer(data["room_id"], room) # 添加回合倒计时任务
+        emit_update_room(data["room_id"])
+
+@socketio.on("cancel ready", namespace="/4ncRoom")
+def on_cancel_ready(data):
+    if not current_user.is_authenticated: # type: ignore
+        # TODO 用户未登录，向用户返回错误
+        return
+    # 用户点击了取消准备. 先validate能不能取消准备 data={"room_id":room_id}
+    sid = request.sid # type: ignore
+    uid = current_user.id # type: ignore
+    # 检查参数合法性
+    if not isinstance(data["room_id"], int) or data["room_id"] not in range(1, 101):
+        # TODO 房间号字段不合法，向用户返回错误
+        return
+    with lock_list[data["room_id"]]:
+        room = get_room_by_id(data["room_id"])
+        user4nc = get_user4nc_by_uid(uid)
+        if room is None or user4nc is None or room.is_game_started or user4nc.rid != data["room_id"]:
+             # TODO 不该发生的事，依次为：房间不存在、用户不在任何房间、游戏已经开始、用户在a房间却请求b房间的取消准备
+            return
+        # 看看用户是玩家几
+        player_position = get_player_position(data["room_id"], uid)
+        if player_position != 0:
+            # 用户在座位上，那么将用户标记为取消准备
+            player_cancel_ready(data["room_id"], player_position)  
+        else:
+            # TODO 用户不在座位上，向用户返回错误
+            return
         emit_update_room(data["room_id"])
 
 @socketio.on("give up", namespace="/4ncRoom")
@@ -602,6 +640,23 @@ def game_over(room_id):
         # 重置参数
         room.is_game_started = False
         room.pause = False
+            #清退离场了的玩家
+        if room.player1_id is not None:
+            user4nc = get_user4nc_by_uid(room.player1_id)
+            if user4nc is None:
+                room.player1_id = None
+        if room.player2_id is not None:
+            user4nc = get_user4nc_by_uid(room.player2_id)
+            if user4nc is None:
+                room.player2_id = None
+        if room.player3_id is not None:
+            user4nc = get_user4nc_by_uid(room.player3_id)
+            if user4nc is None:
+                room.player3_id = None
+        if room.player4_id is not None:
+            user4nc = get_user4nc_by_uid(room.player4_id)
+            if user4nc is None:
+                room.player4_id = None
         db.session.commit()
         # 清空缓存
         clear_cache(room_id)
