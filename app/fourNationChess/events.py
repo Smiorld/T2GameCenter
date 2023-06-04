@@ -191,6 +191,8 @@ def on_disconnect():
     user4nc = get_user4nc_by_uid(uid)
     if user4nc is None: # 奇怪的情况。如果用户不在房间里，那么直接返回，不做任何操作
         return
+    elif user4nc.sid != sid: # 断开的是一个重复进入了房间的sid，那么直接返回，不做任何操作
+        return
     with lock_list[user4nc.rid]:
         # 如果用户在房间里，那么检查该局游戏是否开始 且 用户是不是该局游戏玩家
         room = get_room_by_id(user4nc.rid)
