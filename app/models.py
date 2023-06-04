@@ -136,7 +136,6 @@ def load_user(user_id):
 @db.event.listens_for(User4NC, 'after_delete')
 def delete_cache_after_commit(mapper, connection, target):
     with app.app_context():
-        app.logger.info("delete cache after commit")
         if isinstance(target, User):
             cache.delete("user/" + str(target.id))
         elif isinstance(target, FourNationChessRoom):
