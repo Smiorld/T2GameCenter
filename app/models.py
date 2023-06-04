@@ -125,16 +125,16 @@ def load_user(user_id):
 
 
 # 监听数据库变化，删除缓存. 之所以这样做，因为监听after_commit并不对cascade delete起作用，必须单独监听after_delete，所以干脆全部分开写
-@event.listens_for(User, 'after_insert')
-@event.listens_for(User, 'after_update')
-@event.listens_for(User, 'after_delete')
-@event.listens_for(FourNationChessRoom, 'after_insert')
-@event.listens_for(FourNationChessRoom, 'after_update')
-@event.listens_for(FourNationChessRoom, 'after_delete')
-@event.listens_for(User4NC, 'after_insert')
-@event.listens_for(User4NC, 'after_update')
-@event.listens_for(User4NC, 'after_delete')
-def delete_cache_after_commit(mapper, connection, target):
+@event.listens_for(User, 'before_insert')
+@event.listens_for(User, 'before_update')
+@event.listens_for(User, 'before_delete')
+@event.listens_for(FourNationChessRoom, 'before_insert')
+@event.listens_for(FourNationChessRoom, 'before_update')
+@event.listens_for(FourNationChessRoom, 'before_delete')
+@event.listens_for(User4NC, 'before_insert')
+@event.listens_for(User4NC, 'before_update')
+@event.listens_for(User4NC, 'before_delete')
+def delete_cache_before_commit(mapper, connection, target):
     with app.app_context():
         if isinstance(target, User):
             cache.delete("user/" + str(target.id))

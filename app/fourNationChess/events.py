@@ -301,6 +301,9 @@ def on_sit_down(data):
             app.logger.info('sit down 位置参数不合法')
             return
         db.session.commit()
+        app.logger.info(room.player1_id)
+        room = get_room_by_id(data["room_id"])
+        app.logger.info(room.player1_id)
         # 将用户移除观众room 分配到玩家room
         leave_room(data["room_id"], sid, namespace="/4ncRoom")
         join_room(str(data['room_id'])+"_player", sid, namespace="/4ncRoom")
@@ -500,7 +503,7 @@ def on_move_action(data):
 
 def emit_update_room(room_id):
     with app.app_context():
-
+        app.logger.info('emit_update_room')
         # get the updated room object
         room = get_room_by_id(room_id)
         if room is None:
@@ -512,6 +515,10 @@ def emit_update_room(room_id):
         player2 = get_user_by_id(room.player2_id)
         player3 = get_user_by_id(room.player3_id)
         player4 = get_user_by_id(room.player4_id)
+        player1_4nc = get_user4nc_by_uid(room.player1_id)
+        player2_4nc = get_user4nc_by_uid(room.player2_id)
+        player3_4nc = get_user4nc_by_uid(room.player3_id)
+        player4_4nc = get_user4nc_by_uid(room.player4_id)
        
 
         # get board data 这里的数据按需存取
@@ -540,14 +547,18 @@ def emit_update_room(room_id):
         specified_data_4 = {}
 
         # 接下来将数据分发给房间内的所有人。p1-p4会拿到自己+对家的棋子数据，而观战者会拿到所有棋子数据 或 全盲（取决于god_perspective）。
-        if player1 is not None:
-            emit("update room", {'common_data':common_data,'specified_data':specified_data_1}, to=player1.user_4nc.sid, namespace="/4ncRoom") 
-        if player2 is not None:
-            emit("update room", {'common_data':common_data,'specified_data':specified_data_2}, to=player2.user_4nc.sid, namespace="/4ncRoom") 
-        if player3 is not None:
-            emit("update room", {'common_data':common_data,'specified_data':specified_data_3}, to=player3.user_4nc.sid, namespace="/4ncRoom") 
-        if player4 is not None:
-            emit("update room", {'common_data':common_data,'specified_data':specified_data_4}, to=player4.user_4nc.sid, namespace="/4ncRoom") 
+        if player1_4nc is not None:
+            app.logger.info('emit_update_room player1_4nc')
+            emit("update room", {'common_data':common_data,'specified_data':specified_data_1}, to=player1_4nc.sid, namespace="/4ncRoom") 
+        if player2_4nc is not None:
+            app.logger.info('emit_update_room player2_4nc')
+            emit("update room", {'common_data':common_data,'specified_data':specified_data_2}, to=player2_4nc.sid, namespace="/4ncRoom") 
+        if player3_4nc is not None:
+            app.logger.info('emit_update_room player3_4nc')
+            emit("update room", {'common_data':common_data,'specified_data':specified_data_3}, to=player3_4nc.sid, namespace="/4ncRoom") 
+        if player4_4nc is not None:
+            app.logger.info('emit_update_room player4_4nc')
+            emit("update room", {'common_data':common_data,'specified_data':specified_data_4}, to=player4_4nc.sid, namespace="/4ncRoom") 
         emit("update room", {'common_data':common_data,'specified_data':specified_data}, to=room_id, namespace="/4ncRoom")
         return
 
