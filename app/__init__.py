@@ -56,8 +56,9 @@ def create_app(make_db=False, delete_room_on_launch=True,debug=False) -> Flask:
     
     if not make_db and delete_room_on_launch:
         with app.app_context():
-            from .models import FourNationChessRoom
+            from .models import FourNationChessRoom, User4NC
             FourNationChessRoom.query.delete()
+            User4NC.query.delete()
             db.session.commit()
             cache.clear()
 

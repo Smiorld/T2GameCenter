@@ -254,6 +254,7 @@ def on_disconnect():
 
 @socketio.on("sit down", namespace="/4ncRoom")   
 def on_sit_down(data):
+    app.logger.info('sit down triggered')
     if not current_user.is_authenticated: # type: ignore
         # 游客乱请求，不理他
         app.logger.info('sit down 游客乱请求')
