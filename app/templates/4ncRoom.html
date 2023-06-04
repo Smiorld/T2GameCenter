@@ -89,10 +89,10 @@
         let your_status = document.getElementById('your_status');
         let game_status = document.getElementById('game_status');
 
-        player1_info.innerHTML = "玩家1：" + data['common_data']['room']['player1_username'] + "，准备状态：" + data['common_data']['is_ready'][0];
-        player2_info.innerHTML = "玩家2：" + data['common_data']['room']['player2_username'] + "，准备状态：" + data['common_data']['is_ready'][1];
-        player3_info.innerHTML = "玩家3：" + data['common_data']['room']['player3_username'] + "，准备状态：" + data['common_data']['is_ready'][2];
-        player4_info.innerHTML = "玩家4：" + data['common_data']['room']['player4_username'] + "，准备状态：" + data['common_data']['is_ready'][3];
+        player1_info.innerHTML = "玩家1：" + data['common_data']['player1']['username'] + "，准备状态：" + data['common_data']['is_ready'][0];
+        player2_info.innerHTML = "玩家2：" + data['common_data']['player2']['username'] + "，准备状态：" + data['common_data']['is_ready'][1];
+        player3_info.innerHTML = "玩家3：" + data['common_data']['player3']['username'] + "，准备状态：" + data['common_data']['is_ready'][2];
+        player4_info.innerHTML = "玩家4：" + data['common_data']['player4']['username'] + "，准备状态：" + data['common_data']['is_ready'][3];
         your_status.innerHTML = "id:" + uid + " name:" + uname;
 
         //更新按钮状态
