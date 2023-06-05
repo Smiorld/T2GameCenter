@@ -7,6 +7,7 @@ from flask_socketio import emit, send, join_room, leave_room, close_room
 from flask_login import current_user, login_required
 from .. import socketio, db, app, cache
 from ..models import FourNationChessRoom, User, User4NC
+from ..models import cache_lock
 import ast # for converting string to object and vice versa
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.executors.pool import ThreadPoolExecutor, ProcessPoolExecutor
@@ -20,7 +21,6 @@ RECONNECT_TIME = 60 #最大等待重连时间，单位为秒。用于等待用�
 # locks
 db_lock = threading.Lock()
 join_room_lock = threading.Lock()
-cache_lock = threading.Lock()
 lock_list = []
 for _ in range(100):
     lock = threading.Lock()

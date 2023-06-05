@@ -4,7 +4,9 @@ from sqlalchemy import null, event
 from app import app, db, login_manager, cache
 from sqlalchemy.orm import backref
 from werkzeug.security import generate_password_hash, check_password_hash
+import threading
 
+cache_lock = threading.Lock()
 
 
 # user table.
@@ -135,7 +137,7 @@ def load_user(user_id):
 @db.event.listens_for(User4NC, 'after_update')
 @db.event.listens_for(User4NC, 'after_delete')
 def delete_cache_after_commit(mapper, connection, target):
-    with app.app_context():
+    with app.app_context() and cache_lock:
         if isinstance(target, User):
             cache.delete("user/" + str(target.id))
         elif isinstance(target, FourNationChessRoom):
