@@ -79,6 +79,11 @@ def FourNationChessCreateRoom():
     else:
         # post method, 直接返回创建后的房间，或者返回错误信息
         with lock_4nc:
+            user4nc = FourNationChessRoom.query.filter_by(id=current_user.id).first() # type: ignore
+            if user4nc is not None:
+                flash("您已经在房间中，无法创建新房间。", "warning")
+                return render_template("4ncCreateRoom.html", form=form)
+
             if form.validate_on_submit():
                 try:
                     count = FourNationChessRoom.query.count()

@@ -3,7 +3,7 @@ import random
 import eventlet
 eventlet.monkey_patch()
 from flask import session, request, current_app, copy_current_request_context
-from flask_socketio import emit, send, join_room, leave_room, close_room
+from flask_socketio import emit, send, join_room, leave_room, close_room, disconnect
 from flask_login import current_user, login_required
 from .. import socketio, db, app, cache
 from ..models import FourNationChessRoom, User, User4NC
@@ -120,18 +120,21 @@ def on_join(data):
     # 检查参数合法性
     if not isinstance(data["room_id"], int) or data["room_id"] not in range(1, 101):
         emit("room reject", {"message": "房间号字段不合法\nInvalid parameters for room_id"}, to=sid, namespace="/4ncRoom")
+        disconnect(sid, namespace="/4ncRoom")
         return
     with join_room_lock and lock_list[data["room_id"]]: # 获取锁，防止用户一口气开了多个房间导致多个窗口均通过验证
 
         room= get_room_by_id(data["room_id"])
         if room is None: # 以防用户手动键入不存在的房间号以进入
             emit("room reject", {"message": "房间不存在\nRoom does not exist."}, to=sid, namespace="/4ncRoom")
+            disconnect(sid, namespace="/4ncRoom")
             return
         
         # 如果房间是私密的，那么需要密码才能进入
         if room.is_private:
             if data["password"] != room.password:
                 emit('room reject', {'message': '密码错误 Password incorrect.'}, to=sid, namespace='/4ncRoom')
+                disconnect(sid, namespace='/4ncRoom')
                 return
 
         # 密码正确 或 没有密码，允许进入房间。
@@ -158,9 +161,31 @@ def on_join(data):
                     emit_update_room(room.id) # 更新房间信息，等待其他玩家重连           
                 return
             else:
-                # 用户不用重连，而是已经再另一个房间了，直接拒绝本次请求
-                emit("room reject", {"message": "您已经在其它房间\nYou are already in another room."}, to=sid, namespace="/4ncRoom")
-                return
+                # 用户不用重连，而是已经再另一个房间了，分情况讨论
+                if user4nc.rid == data["room_id"] and user4nc.sid != sid:
+                    # 如果用户已在本房间，踢出旧的用户，用新的sid建立连接。用于自己顶掉自己的旧连接。
+                    emit('room reject', {'message': '您的账号使用了一个新的窗口进入了房间，本窗口的游戏连接已断开；\nYou entered this room with a new window, so this connection has been kicked out.'}, to=user4nc.sid, namespace='/4ncRoom')
+                    disconnect(sid=user4nc.sid, namespace='/4ncRoom')
+                    # 检测旧用户是玩家还是观众
+                    player_position = get_player_position(user4nc.rid, user4nc.uid)
+                    if player_position==0:
+                        # 观众
+                        leave_room(user4nc.rid, user4nc.sid, namespace="/4ncRoom")
+                        join_room(user4nc.rid, sid, namespace="/4ncRoom")
+                    else:
+                        # 玩家
+                        leave_room(str(user4nc.rid)+'_player', user4nc.sid, namespace="/4ncRoom")
+                        join_room(str(user4nc.rid)+'_player', sid, namespace="/4ncRoom")
+                    # 更新用户信息
+                    user4nc.sid = sid
+                    db.session.commit()
+                    emit_update_room(user4nc.rid)
+                    return
+                elif user4nc.rid != data["room_id"] :
+                    # 如果用户已在其它房间，那么拒绝进入本房间并提示他可以踢掉其它房间的自己。
+                    emit('room reject', {'message': '您已经在房间'+str(user4nc.rid)+'中了，您可以先断掉自己的旧连接后再尝试；\nYou are already in room '+str(user4nc.rid)+', you can kick out your old connection in that room.'}, to=sid, namespace='/4ncRoom')
+                    disconnect(sid=sid, namespace='/4ncRoom')
+                    return
         else:
             # 用户不在其它房间，进入房间成功, 并且将用户信息写入数据库(看看用户是不是游客)
             if current_user.is_authenticated: # type: ignore
