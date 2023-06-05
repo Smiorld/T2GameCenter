@@ -49,6 +49,8 @@
     socket.on('room reject', function (data) {
         // TODO if the server reject the request to join the room, redirect to the home page and flash it
         console.log('room reject you.' + data['message']);
+        alert('room reject you.' + data['message']);
+        window.location.href = window.location.origin;
     });
 
     socket.on('room delete', function (data) {
