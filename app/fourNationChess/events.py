@@ -147,13 +147,11 @@ def on_join(data):
 
                 # 重连。将用户的sid更新为当前sid，后端分配用户进入房间。
                 user4nc.sid = sid
-                db.session.add(user4nc)
                 db.session.commit()
                 join_room(str(data['room_id'])+'_player', sid, namespace="/4ncRoom")
                 # 确认本房间是否还有其他玩家处于等待重连状态，如果没有，那么将房间标记为游戏继续，同时调用继续游戏函数。
                 if User4NC.query.filter_by(rid=data['room_id'], sid=None).first() is None:
                     room.pause = False
-                    db.session.add(room)
                     db.session.commit()
                     add_turn_timer(room.id, room) # 添加回合倒计时任务
                     emit_update_room(room.id) # 更新房间信息，游戏继续
@@ -177,7 +175,6 @@ def on_join(data):
                         join_room(str(data["room_id"])+'_player', sid, namespace="/4ncRoom")
                     # 更新用户信息
                     user4nc.sid = sid
-                    db.session.add(user4nc)
                     db.session.commit()
                     emit_update_room(data["room_id"])
                     app.logger.info("用户"+str(uid)+"在房间"+str(data["room_id"])+"中用新的sid"+str(sid)+"连接了游戏")
@@ -208,6 +205,7 @@ def on_disconnect():
         app.logger.info('游客离开了4nc房间')
         return
     sid = request.sid # type: ignore
+    app.logger.info('disconnect sid: '+str(sid)) # type: ignore
     uid = current_user.id if current_user.is_authenticated else None# type: ignore
     # 需考虑断线重联。如果游戏未开始，那么直接删除该用户在本房间的信息。如果游戏已经开始 且 用户为p1-p4之一，那么需要将战局标记为断线等待，进入额外的断线重连等待时间。
     # 如果用户强行加入了其他房间 或 倒计时未重连，宣布用户离线，且将该用户判定投降。
@@ -230,8 +228,6 @@ def on_disconnect():
                 # 如果游戏已经开始且没输，那么将房间标记为断线等待，然后移除该玩家的sid作为离线标记
                 room.pause = True
                 user4nc.sid = None
-                db.session.add(room)
-                db.session.add(user4nc)
                 db.session.commit()
                 # 调用断线重连倒计时函数，同时将旧的sid踢出房间，通知房间内的剩余玩家本事件的发生
                 add_reconnect_timer(room.id, room)
@@ -258,7 +254,6 @@ def on_disconnect():
                     room.player3_id = None
                 elif player_position == 4:
                     room.player4_id = None
-                db.session.add(room)
                 db.session.commit()
                 leave_room(str(room.id)+"_player", sid, namespace="/4ncRoom")
                 if is_room_empty(room.id):
@@ -335,7 +330,6 @@ def on_sit_down(data):
             # TODO 位置不合法，向用户返回错误
             app.logger.info('sit down 位置参数不合法')
             return
-        db.session.add(room)
         db.session.commit()
         # 将用户移除观众room 分配到玩家room
         leave_room(data["room_id"], sid, namespace="/4ncRoom")
@@ -380,7 +374,6 @@ def on_stand_up(data):
         else:
             # TODO 用户不在座位上，向用户返回错误
             return
-        db.session.add(room)
         db.session.commit()
         # 将用户移除玩家room 分配到观众room，更新房间信息，完活
         leave_room(str(data['room_id'])+"_player", sid, namespace="/4ncRoom")
@@ -614,7 +607,6 @@ def game_start(room_id):
         # 游戏开始，将房间标记为游戏开始，然后将所有数据正确地修改为游戏开始后的数据。。
         room.is_game_started = True   
         # TODO 各项初始化
-        db.session.add(room)
         db.session.commit()
         return
         
@@ -691,25 +683,20 @@ def game_over(room_id):
             #清退离场了的玩家
         if room.player1_id is not None:
             user4nc = get_user4nc_by_uid(room.player1_id)
-            db.session.add(user4nc)
             if user4nc is None:
                 room.player1_id = None
         if room.player2_id is not None:
             user4nc = get_user4nc_by_uid(room.player2_id)
-            db.session.add(user4nc)
             if user4nc is None:
                 room.player2_id = None
         if room.player3_id is not None:
             user4nc = get_user4nc_by_uid(room.player3_id)
-            db.session.add(user4nc)
             if user4nc is None:
                 room.player3_id = None
         if room.player4_id is not None:
             user4nc = get_user4nc_by_uid(room.player4_id)
-            db.session.add(user4nc)
             if user4nc is None:
                 room.player4_id = None
-        db.session.add(room)
         db.session.commit()
         # 清空缓存
         clear_cache(room_id)
@@ -772,6 +759,8 @@ def get_room_by_id(room_id) -> FourNationChessRoom | None:
         if room is None:
             room = FourNationChessRoom.query.filter_by(id=room_id).first()
             cache.set("room/"+str(room_id), room)
+        else:
+            db.session.add(room)
         return room # type: ignore
 
 def get_user_by_id(user_id) -> User | None:
@@ -781,6 +770,8 @@ def get_user_by_id(user_id) -> User | None:
         if user is None:
             user = User.query.filter_by(id=user_id).first()
             cache.set("user/"+str(user_id), user)
+        else:
+            db.session.add(user)
         return user # type: ignore
 
 def get_user4nc_by_uid(user_id) -> User4NC | None:
@@ -790,6 +781,8 @@ def get_user4nc_by_uid(user_id) -> User4NC | None:
         if user4nc is None:
             user4nc = User4NC.query.filter_by(uid=user_id).first()
             cache.set("user4nc/"+str(user_id), user4nc)
+        else:
+            db.session.add(user4nc)
         return user4nc # type: ignore
     
 def get_is_lost(room_id) -> list[int] :
