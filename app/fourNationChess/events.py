@@ -161,25 +161,26 @@ def on_join(data):
                     emit_update_room(room.id) # 更新房间信息，等待其他玩家重连           
                 return
             else:
-                # 用户不用重连，而是已经再另一个房间了，分情况讨论
+                # 用户不用重连，而是已经再一个房间了，分情况讨论
                 if user4nc.rid == data["room_id"] and user4nc.sid != sid:
                     # 如果用户已在本房间，踢出旧的用户，用新的sid建立连接。用于自己顶掉自己的旧连接。
                     emit('room reject', {'message': '您的账号使用了一个新的窗口进入了房间，本窗口的游戏连接已断开；\nYou entered this room with a new window, so this connection has been kicked out.'}, to=user4nc.sid, namespace='/4ncRoom')
                     disconnect(sid=user4nc.sid, namespace='/4ncRoom')
                     # 检测旧用户是玩家还是观众
-                    player_position = get_player_position(user4nc.rid, user4nc.uid)
+                    player_position = get_player_position(user4nc.rid, uid)
                     if player_position==0:
                         # 观众
-                        leave_room(user4nc.rid, user4nc.sid, namespace="/4ncRoom")
-                        join_room(user4nc.rid, sid, namespace="/4ncRoom")
+                        leave_room(data["room_id"], user4nc.sid, namespace="/4ncRoom")
+                        join_room(data["room_id"], sid, namespace="/4ncRoom")
                     else:
                         # 玩家
-                        leave_room(str(user4nc.rid)+'_player', user4nc.sid, namespace="/4ncRoom")
-                        join_room(str(user4nc.rid)+'_player', sid, namespace="/4ncRoom")
+                        leave_room(str(data["room_id"])+'_player', user4nc.sid, namespace="/4ncRoom")
+                        join_room(str(data["room_id"])+'_player', sid, namespace="/4ncRoom")
                     # 更新用户信息
                     user4nc.sid = sid
                     db.session.commit()
-                    emit_update_room(user4nc.rid)
+                    emit_update_room(room.id)
+                    app.logger.info("用户"+str(uid)+"在房间"+str(data["room_id"])+"中用新的sid"+str(sid)+"连接了游戏")
                     return
                 elif user4nc.rid != data["room_id"] :
                     # 如果用户已在其它房间，那么拒绝进入本房间并提示他可以踢掉其它房间的自己。
