@@ -165,7 +165,6 @@ def on_join(data):
                 if user4nc.rid == data["room_id"] and user4nc.sid != sid:
                     # 如果用户已在本房间，踢出旧的用户，用新的sid建立连接。用于自己顶掉自己的旧连接。
                     emit('room reject', {'message': '您的账号使用了一个新的窗口进入了房间，本窗口的游戏连接已断开；\nYou entered this room with a new window, so this connection has been kicked out.'}, to=user4nc.sid, namespace='/4ncRoom')
-                    disconnect(sid=user4nc.sid, namespace='/4ncRoom')
                     # 检测旧用户是玩家还是观众
                     player_position = get_player_position(user4nc.rid, uid)
                     if player_position==0:
@@ -185,7 +184,6 @@ def on_join(data):
                 elif user4nc.rid != data["room_id"] :
                     # 如果用户已在其它房间，那么拒绝进入本房间并提示他可以踢掉其它房间的自己。
                     emit('room reject', {'message': '您已经在房间'+str(user4nc.rid)+'中了，您可以先断掉自己的旧连接后再尝试；\nYou are already in room '+str(user4nc.rid)+', you can kick out your old connection in that room.'}, to=sid, namespace='/4ncRoom')
-                    disconnect(sid=sid, namespace='/4ncRoom')
                     return
         else:
             # 用户不在其它房间，进入房间成功, 并且将用户信息写入数据库(看看用户是不是游客)
