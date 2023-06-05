@@ -169,11 +169,11 @@ def on_join(data):
                     player_position = get_player_position(user4nc.rid, uid)
                     if player_position==0:
                         # 观众
-                        leave_room(data["room_id"], user4nc.sid, namespace="/4ncRoom")
+                        leave_room(data["room_id"], sid=user4nc.sid, namespace="/4ncRoom")
                         join_room(data["room_id"], sid, namespace="/4ncRoom")
                     else:
                         # 玩家
-                        leave_room(str(data["room_id"])+'_player', user4nc.sid, namespace="/4ncRoom")
+                        leave_room(str(data["room_id"])+'_player', sid=user4nc.sid, namespace="/4ncRoom")
                         join_room(str(data["room_id"])+'_player', sid, namespace="/4ncRoom")
                     # 更新用户信息
                     user4nc.sid = sid
